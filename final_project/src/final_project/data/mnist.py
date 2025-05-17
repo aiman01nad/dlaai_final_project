@@ -1,0 +1,18 @@
+from torchvision import datasets, transforms
+from torch.utils.data import DataLoader
+from pathlib import Path
+
+def get_dataloaders(batch_size=128):
+    transform = transforms.Compose([
+        transforms.ToTensor()
+    ])
+
+    data_root = Path(__file__).resolve().parent
+
+    train = datasets.MNIST(data_root, train=True, download=True, transform=transform)
+    test = datasets.MNIST(data_root, train=False, download=True, transform=transform)
+    
+    return (
+        DataLoader(train, batch_size=batch_size, shuffle=True),
+        DataLoader(test, batch_size=batch_size, shuffle=False)
+    )
