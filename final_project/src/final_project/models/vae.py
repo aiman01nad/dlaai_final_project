@@ -62,6 +62,7 @@ class VectorQuantizer(nn.Module):
         quantized = z + (quantized - z).detach()
 
         return quantized, loss
+
 class VQVAE(nn.Module):
     def __init__(self, hidden_dim=128, embedding_dim=64, num_embeddings=512, commitment_cost=0.25):
         super().__init__()

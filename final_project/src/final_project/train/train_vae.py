@@ -1,7 +1,6 @@
 from pathlib import Path
 import torch
 import torch.nn.functional as F
-
 from final_project.models.vae import VQVAE
 from final_project.data.mnist import get_dataloaders
 
