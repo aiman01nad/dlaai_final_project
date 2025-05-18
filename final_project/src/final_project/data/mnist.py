@@ -2,7 +2,7 @@ from torchvision import datasets, transforms
 from torch.utils.data import DataLoader
 from pathlib import Path
 
-def get_dataloaders(batch_size=128):
+def get_dataloaders(batch_size):
     transform = transforms.Compose([
         transforms.ToTensor()
     ])

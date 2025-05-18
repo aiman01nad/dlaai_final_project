@@ -1,12 +1,12 @@
-from pathlib import Path
 import torch
 import torch.nn.functional as F
-from final_project.models.vae import VQVAE
+from final_project.models.vqvae import VQVAE
 from final_project.data.mnist import get_dataloaders
+from final_project.utils.helpers import save_model
 
-def train_vae(epochs, lr=1e-3, batch_size=128, device='cpu'):
+def train_vqvae(model, epochs, lr, batch_size, device):
     train_loader, _ = get_dataloaders(batch_size)
-    model = VQVAE().to(device)
+    model = model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
     for epoch in range(epochs):
@@ -29,12 +29,5 @@ def train_vae(epochs, lr=1e-3, batch_size=128, device='cpu'):
 
         print(f'====> Epoch: {epoch} Average loss: {total_loss / len(train_loader):.4f}')
 
-    save_model(model)
+    save_model(model, "vqvae.pth")
     return model
-
-def save_model(model, name="vae.pth"):
-    root = Path(__file__).resolve().parents[1]  # Go up to project root
-    ckpt_dir = root / "checkpoints"
-    ckpt_dir.mkdir(parents=True, exist_ok=True)
-    torch.save(model.state_dict(), ckpt_dir / name)
-    print(f"Model saved to {ckpt_dir / name}")

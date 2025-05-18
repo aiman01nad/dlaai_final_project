@@ -3,12 +3,12 @@ import torch
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
-from final_project.models.vae import VQVAE
+from final_project.models.vqvae import VQVAE
 from final_project.data.mnist import get_dataloaders
 
-def visualize_latents(model_path, output_dir, device, method='tsne', batch_size=64):
+def visualize_latents(model, model_path, output_dir, device, method='tsne', batch_size=64):
     os.makedirs(output_dir, exist_ok=True)
-    model = VQVAE().to(device)
+    model = model.to(device)
     model.load_state_dict(torch.load(model_path, map_location=device))
     model.eval()
 
@@ -32,6 +32,6 @@ def visualize_latents(model_path, output_dir, device, method='tsne', batch_size=
     plt.figure(figsize=(10, 8))
     scatter = plt.scatter(reduced[:, 0], reduced[:, 1], c=labels, cmap='tab10', alpha=0.7)
     plt.colorbar(scatter, ticks=range(10))
-    plt.title(f"{method.upper()} Visualization of VAE Latent Space")
+    plt.title(f"{method.upper()} Visualization of VQVAE Latent Space")
     plt.savefig(os.path.join(output_dir, f"{method}_latent_plot.png"))
     plt.show()

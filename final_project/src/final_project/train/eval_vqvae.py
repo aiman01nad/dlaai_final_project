@@ -1,14 +1,12 @@
 from matplotlib import pyplot as plt
 import torch
-from torchvision.utils import make_grid, save_image
 import os
-from final_project.models.vae import VQVAE
+from final_project.models.vqvae import VQVAE
 from final_project.data.mnist import get_dataloaders
 
-def evaluate_model(checkpoint_path, output_dir, device, num_images=16):
+def evaluate_model(model, checkpoint_path, output_dir, device, num_images=16):
     os.makedirs(output_dir, exist_ok=True)
-
-    model = VQVAE().to(device)
+    model = model.to(device)
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
     model.eval()
 
@@ -34,6 +32,6 @@ def evaluate_model(checkpoint_path, output_dir, device, num_images=16):
             axes[1, i].set_title("Reconstructed")
 
     plt.tight_layout(pad=0.1)
-    plt.savefig(os.path.join(output_dir, "vae_reconstruction.png"), bbox_inches='tight', dpi=150)
+    plt.savefig(os.path.join(output_dir, "vqvae_reconstruction.png"), bbox_inches='tight', dpi=150)
     plt.show()
     plt.close()
