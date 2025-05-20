@@ -42,7 +42,7 @@ if __name__ == "__main__":
 
     # Model parameters
     hidden_dim = 64
-    embedding_dim = 2
+    embedding_dim = 8
 
     # Training parameters
     epochs = 40
