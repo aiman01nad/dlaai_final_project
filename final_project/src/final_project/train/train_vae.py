@@ -1,11 +1,14 @@
+import random
+import numpy as np
 import torch
 import torch.nn.functional as F
 from final_project.models import VAE
 from final_project.data import get_dataloaders
 from final_project.utils import save_model
 
-def train_vae(model: VAE, epochs, lr, batch_size, device, beta=1.0):
+def train_vae(hidden_dim, embedding_dim, epochs, lr, batch_size, device, beta):
     train_loader, _ = get_dataloaders(batch_size)
+    model = VAE(hidden_dim=hidden_dim, embedding_dim=embedding_dim)
     model = model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
@@ -32,3 +35,42 @@ def train_vae(model: VAE, epochs, lr, batch_size, device, beta=1.0):
 
     save_model(model, f"vae.pth")
     return model
+
+if __name__ == "__main__":
+    import argparse
+    from final_project.models.vae import VAE
+
+    # Model parameters
+    hidden_dim = 128
+    embedding_dim = 64
+
+    # Training parameters
+    epochs = 40
+    lr = 1e-3
+    batch_size = 128
+    beta = 1.0
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    save_path = "vae.pth"
+
+    # Set the random seed for reproducibility
+    torch.manual_seed(42)
+    np.random.seed(42)
+    random.seed(0)
+
+    torch.cuda.manual_seed(0)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--epochs", type=int, default=epochs)
+    parser.add_argument("--lr", type=float, default=lr)
+    parser.add_argument("--batch_size", type=int, default=batch_size)
+    parser.add_argument("--beta", type=float, default=beta)
+    parser.add_argument("--device", type=str, default=device)
+    parser.add_argument("--save_path", type=str, default="vae.pth")
+
+    args = parser.parse_args()
+
+    model = VAE(hidden_dim=hidden_dim, embedding_dim=embedding_dim)
+    train_vae(hidden_dim, embedding_dim, args.epochs, args.lr, args.batch_size, args.device, args.beta)
+    print(f"Model saved to {args.save_path}")

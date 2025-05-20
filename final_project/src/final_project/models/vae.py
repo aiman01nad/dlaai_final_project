@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 class Encoder(nn.Module):
-    def __init__(self, hidden_dim=128, embedding_dim=64):
+    def __init__(self, hidden_dim, embedding_dim):
         super().__init__()
         self.conv1 = nn.Conv2d(1, hidden_dim, 4, stride=2, padding=1) # Input: (1, 28, 28) -> Output: (hidden_dim, 14, 14)
         self.conv2 = nn.Conv2d(hidden_dim, hidden_dim*2, 4, stride=2, padding=1) # Output: (hidden_dim*2, 7, 7)
@@ -37,7 +37,7 @@ class Decoder(nn.Module):
         return x
     
 class VAE(nn.Module):
-    def __init__(self, hidden_dim=128, embedding_dim=64):
+    def __init__(self, hidden_dim, embedding_dim):
         super().__init__()
         self.encoder = Encoder(hidden_dim, embedding_dim)
         self.decoder = Decoder(embedding_dim, hidden_dim)
