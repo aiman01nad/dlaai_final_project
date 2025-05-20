@@ -74,5 +74,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     model = VAE(hidden_dim=hidden_dim, embedding_dim=embedding_dim)
-    train_vae(hidden_dim, embedding_dim, args.epochs, args.lr, args.batch_size, args.device, args.beta)
+    train_vae(hidden_dim, embedding_dim, args.epochs, args.lr, args.weight_decay, args.batch_size, args.device, args.beta)
     print(f"Model saved to {args.save_path}")
