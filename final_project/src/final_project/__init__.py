@@ -32,7 +32,7 @@ np.random.seed(42)
 random.seed(0)
 
 torch.cuda.manual_seed(0)
-torch.backends.cudnn.deterministic = True  # Note that this Deterministic mode can have a performance impact
+torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
 

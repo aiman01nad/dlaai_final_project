@@ -21,7 +21,7 @@ class Encoder(nn.Module):
         return x_mu, x_logvar
 
 class Decoder(nn.Module):
-    def __init__(self, embedding_dim=64, hidden_dim=128):
+    def __init__(self, embedding_dim, hidden_dim):
         super().__init__()
         self.hidden_dim = hidden_dim
         self.fc = nn.Linear(embedding_dim, hidden_dim*2*7*7)
