@@ -1,7 +1,7 @@
 [project]
 name = "final-project"
 version = "0.1.0"
-description = "Add your description here"
+description = "Final project for the course Deep Learning and Applied AI at Sapienza"
 readme = "README.md"
 authors = [
     { name = "Aiman", email = "aimann@stud.ntnu.no" }

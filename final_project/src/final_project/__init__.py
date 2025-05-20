@@ -4,12 +4,14 @@ import numpy as np
 import torch
 from final_project.data.mnist import get_dataloaders
 from final_project.models.vqvae import VQVAE
+from final_project.models.vae import VAE
 from final_project.train.train_vqvae import train_vqvae
+from final_project.train.train_vae import train_vae
 from final_project.train.eval_vqvae import evaluate_model
 from final_project.utils.visualize_latents import visualize_latents
 
 # Hyperparameters
-EPOCHS = 5
+EPOCHS = 40
 LEARNING_RATE = 1e-3
 BATCH_SIZE = 128
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -19,6 +21,10 @@ hidden_dim = 128
 embedding_dim = 64
 num_embeddings = 512
 commitment_cost = 0.25
+
+# VAE model parameters
+vae_hidden_dim = 64
+vae_embedding_dim = 2
 
 # Set the random seed for reproducibility
 torch.manual_seed(42)
@@ -38,8 +44,10 @@ def main() -> None:
     parser.add_argument("--device", type=str, default=DEVICE)
     args = parser.parse_args()
 
-    model = VQVAE(hidden_dim=hidden_dim, embedding_dim=embedding_dim, num_embeddings=num_embeddings, commitment_cost=commitment_cost)
+    vqvae = VQVAE(hidden_dim=hidden_dim, embedding_dim=embedding_dim, num_embeddings=num_embeddings, commitment_cost=commitment_cost)
+    vae = VAE(hidden_dim=hidden_dim, embedding_dim=embedding_dim)
     #train_vqvae(model, epochs=args.epochs, lr=args.learning_rate, batch_size=args.batch_size, device=args.device)
     #evaluate_model(model, checkpoint_path="src/final_project/checkpoints/vqvae.pth", output_dir="src/final_project/outputs/vqvae_eval", device=args.device)
-    visualize_latents(model, model_path="src/final_project/checkpoints/vqvae.pth", output_dir="src/final_project/outputs/vqvae_eval", device=args.device, method='tsne')
+    #visualize_latents(model, model_path="src/final_project/checkpoints/vqvae.pth", output_dir="src/final_project/outputs/vqvae_eval", device=args.device, method='tsne')
 
+    train_vae(vae, epochs=args.epochs, lr=args.learning_rate, batch_size=args.batch_size, device=args.device)

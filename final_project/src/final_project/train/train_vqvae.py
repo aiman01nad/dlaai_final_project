@@ -4,7 +4,7 @@ from final_project.models.vqvae import VQVAE
 from final_project.data.mnist import get_dataloaders
 from final_project.utils.helpers import save_model
 
-def train_vqvae(model, epochs, lr, batch_size, device):
+def train_vqvae(model: VQVAE, epochs, lr, batch_size, device):
     train_loader, _ = get_dataloaders(batch_size)
     model = model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)

@@ -4,7 +4,7 @@ import os
 from final_project.models.vqvae import VQVAE
 from final_project.data.mnist import get_dataloaders
 
-def evaluate_model(model, checkpoint_path, output_dir, device, num_images=16):
+def evaluate_model(model: VQVAE, checkpoint_path, output_dir, device, num_images=16):
     os.makedirs(output_dir, exist_ok=True)
     model = model.to(device)
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
