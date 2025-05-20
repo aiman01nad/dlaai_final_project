@@ -3,8 +3,8 @@ import torch
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 from sklearn.decomposition import PCA
-from final_project.models.vqvae import VQVAE
-from final_project.data.mnist import get_dataloaders
+from final_project.models import VQVAE
+from final_project.data import get_dataloaders
 
 def visualize_latents(model: VQVAE, model_path, output_dir, device, method='tsne', batch_size=64):
     os.makedirs(output_dir, exist_ok=True)

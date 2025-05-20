@@ -2,13 +2,13 @@ import argparse
 import random
 import numpy as np
 import torch
-from final_project.data.mnist import get_dataloaders
-from final_project.models.vqvae import VQVAE
-from final_project.models.vae import VAE
-from final_project.train.train_vqvae import train_vqvae
-from final_project.train.train_vae import train_vae
-from final_project.train.eval_vqvae import evaluate_model
-from final_project.utils.visualize_latents import visualize_latents
+from final_project.data import get_dataloaders
+from final_project.models import VQVAE
+from final_project.models import VAE
+from final_project.train import train_vqvae
+from final_project.train import train_vae
+from final_project.train import evaluate_vqvae
+from final_project.utils import visualize_latents
 
 # Hyperparameters
 EPOCHS = 40
@@ -47,7 +47,7 @@ def main() -> None:
     vqvae = VQVAE(hidden_dim=hidden_dim, embedding_dim=embedding_dim, num_embeddings=num_embeddings, commitment_cost=commitment_cost)
     vae = VAE(hidden_dim=hidden_dim, embedding_dim=embedding_dim)
     #train_vqvae(model, epochs=args.epochs, lr=args.learning_rate, batch_size=args.batch_size, device=args.device)
-    #evaluate_model(model, checkpoint_path="src/final_project/checkpoints/vqvae.pth", output_dir="src/final_project/outputs/vqvae_eval", device=args.device)
+    #evaluate_vqvae(model, checkpoint_path="src/final_project/checkpoints/vqvae.pth", output_dir="src/final_project/outputs/vqvae_eval", device=args.device)
     #visualize_latents(model, model_path="src/final_project/checkpoints/vqvae.pth", output_dir="src/final_project/outputs/vqvae_eval", device=args.device, method='tsne')
 
     train_vae(vae, epochs=args.epochs, lr=args.learning_rate, batch_size=args.batch_size, device=args.device)

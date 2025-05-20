@@ -1,8 +1,8 @@
 import torch
 import torch.nn.functional as F
-from final_project.models.vae import VAE
-from final_project.data.mnist import get_dataloaders
-from final_project.utils.helpers import save_model
+from final_project.models import VAE
+from final_project.data import get_dataloaders
+from final_project.utils import save_model
 
 def train_vae(model: VAE, epochs, lr, batch_size, device, beta=1.0):
     train_loader, _ = get_dataloaders(batch_size)

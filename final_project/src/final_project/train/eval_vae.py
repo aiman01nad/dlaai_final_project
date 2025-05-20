@@ -1,8 +1,8 @@
 from matplotlib import pyplot as plt
 import torch
 import os
-from final_project.models.vae import VAE
-from final_project.data.mnist import get_dataloaders
+from final_project.models import VAE
+from final_project.data import get_dataloaders
 
 def evaluate_vae(model: VAE, checkpoint_path, output_dir, device, num_images=16):
     os.makedirs(output_dir, exist_ok=True)

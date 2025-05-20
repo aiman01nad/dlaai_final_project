@@ -1,10 +1,10 @@
 from matplotlib import pyplot as plt
 import torch
 import os
-from final_project.models.vqvae import VQVAE
-from final_project.data.mnist import get_dataloaders
+from final_project.models import VQVAE
+from final_project.data import get_dataloaders
 
-def evaluate_model(model: VQVAE, checkpoint_path, output_dir, device, num_images=16):
+def evaluate_vqvae(model: VQVAE, checkpoint_path, output_dir, device, num_images=16):
     os.makedirs(output_dir, exist_ok=True)
     model = model.to(device)
     model.load_state_dict(torch.load(checkpoint_path, map_location=device))
