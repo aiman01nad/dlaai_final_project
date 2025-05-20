@@ -12,7 +12,7 @@ def extract_latents_vae(model: VAE, dataloader, device):
     with torch.no_grad():
         for x, y in dataloader:
             x = x.to(device)
-            _, mu, _ = model.encoder(x) # Using the mean of the posterior
+            mu, _ = model.encoder(x) # Using the mean of the posterior
             latents.append(mu.cpu())
             labels.append(y)
 
@@ -20,8 +20,8 @@ def extract_latents_vae(model: VAE, dataloader, device):
     labels = torch.cat(labels).numpy()
     return latents, labels
 
-def visualize_latents_vae(latents, labels, save_path='vae_latent_plot.png'):
-    tsne = TSNE(n_components=2, perplexity=30, init="pca", random_state=42)
+def visualize_latents_vae(latents, labels, save_path='src/final_project/outputs/vae_latent_plot.png'):
+    tsne = TSNE(n_components=2, random_state=42)
     latents_2d = tsne.fit_transform(latents)
 
     plt.figure(figsize=(8,6))
@@ -31,13 +31,13 @@ def visualize_latents_vae(latents, labels, save_path='vae_latent_plot.png'):
     plt.xlabel("Latent Dim 1")
     plt.ylabel("Latent Dim 2")
     plt.grid(True)
-    plt.show()
     plt.savefig(save_path)
+    plt.show()
     print(f"Latent space visualization saved to {save_path}")
 
 if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model_path = "src/final_project/checkpoints/vae.pth"  # Path to the trained VAE model
+    model_path = "src/final_project/checkpoints/vae3.pth"  # Path to the trained VAE model
     model = load_model('vae', model_path, device)  # Load the trained VAE model
     train_loader, test_loader = get_dataloaders(batch_size=128)
     
