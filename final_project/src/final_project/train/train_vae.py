@@ -1,15 +1,11 @@
-import random
-import numpy as np
 import torch
 import torch.nn.functional as F
 from final_project.models import VAE
 from final_project.data import get_dataloaders
-from final_project.utils import save_model
+from final_project.utils import save_model, load_config, set_seed
 
-def train_vae(hidden_dim, embedding_dim, epochs, lr, weight_decay, batch_size, device, beta):
+def train_vae(model: VAE, epochs, lr, weight_decay, batch_size, device, beta, save_name):
     train_loader, _ = get_dataloaders(batch_size)
-    model = VAE(hidden_dim=hidden_dim, embedding_dim=embedding_dim)
-    model = model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
 
     for epoch in range(epochs):
@@ -33,46 +29,29 @@ def train_vae(hidden_dim, embedding_dim, epochs, lr, weight_decay, batch_size, d
         
         print(f'====> Epoch: {epoch} Average loss: {total_loss / len(train_loader.dataset):.4f}')
 
-    save_model(model, f"vae.pth")
+    save_model(model, save_name)
     return model
 
-if __name__ == "__main__":
-    import argparse
-    from final_project.models.vae import VAE
+def main():
+    set_seed()
+    vae_config = load_config("src/final_project/configs/vae_config.yaml")
 
-    # Model parameters
-    hidden_dim = 64
-    embedding_dim = 8
+    hidden_dim = vae_config["model"]["hidden_dim"]
+    embedding_dim = vae_config["model"]["embedding_dim"]
 
-    # Training parameters
-    epochs = 40
-    lr = 1e-3
-    weight_decay = 1e-5
-    batch_size = 128
-    beta = 1.0
+    epochs = vae_config["training"]["epochs"]
+    lr = vae_config["training"]["learining_rate"]
+    weight_decay = vae_config["training"]["weight_decay"]
+    batch_size = vae_config["training"]["batch_size"]
+    beta = vae_config["training"]["beta"]
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    save_path = "vae.pth"
-
-    # Set the random seed for reproducibility
-    torch.manual_seed(42)
-    np.random.seed(42)
-    random.seed(0)
-
-    torch.cuda.manual_seed(0)
-    torch.backends.cudnn.deterministic = True
-    torch.backends.cudnn.benchmark = False
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--epochs", type=int, default=epochs)
-    parser.add_argument("--lr", type=float, default=lr)
-    parser.add_argument("--weight_decay", type=float, default=weight_decay)
-    parser.add_argument("--batch_size", type=int, default=batch_size)
-    parser.add_argument("--beta", type=float, default=beta)
-    parser.add_argument("--device", type=str, default=device)
-    parser.add_argument("--save_path", type=str, default=save_path)
-
-    args = parser.parse_args()
+    save_name = "vae.pth"
 
     model = VAE(hidden_dim=hidden_dim, embedding_dim=embedding_dim)
-    train_vae(hidden_dim, embedding_dim, args.epochs, args.lr, args.weight_decay, args.batch_size, args.device, args.beta)
-    print(f"Model saved to {args.save_path}")
+    model = model.to(device)
+
+    model = train_vae(model, epochs, lr, weight_decay, batch_size, device, beta, save_name)
+
+if __name__ == "__main__":
+    main()
