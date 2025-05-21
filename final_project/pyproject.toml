@@ -11,6 +11,7 @@ dependencies = [
     "lightning>=2.5.1.post0",
     "matplotlib>=3.10.3",
     "numpy>=2.2.5",
+    "pyclustering>=0.10.1.2",
     "scikit-learn>=1.6.1",
     "torch>=2.7.0",
     "torchvision>=0.22.0",
@@ -18,6 +19,7 @@ dependencies = [
 
 [project.scripts]
 final-project = "final_project:main"
+geodesic-kmeans = "final_project.clustering.geodesic_kmeans:main"
 
 [build-system]
 requires = ["hatchling"]

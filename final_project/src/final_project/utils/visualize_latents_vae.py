@@ -6,6 +6,7 @@ from final_project.models.vae import VAE
 from final_project.utils.helpers import load_model
 
 def extract_latents_vae(model: VAE, dataloader, device):
+    model = model.to(device)
     model.eval()
     latents, labels = [], []
 
@@ -37,7 +38,7 @@ def visualize_latents_vae(latents, labels, save_path='src/final_project/outputs/
 
 if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model_path = "src/final_project/checkpoints/vae3.pth"  # Path to the trained VAE model
+    model_path = "src/final_project/checkpoints/vae.pth"  # Path to the trained VAE model
     model = load_model('vae', model_path, device)  # Load the trained VAE model
     train_loader, test_loader = get_dataloaders(batch_size=128)
     
