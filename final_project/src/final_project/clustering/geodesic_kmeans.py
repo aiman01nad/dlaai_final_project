@@ -1,15 +1,13 @@
 import torch
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
+from sklearn_extra.cluster import KMedoids
 from scipy.sparse.csgraph import shortest_path
 from scipy.sparse import csr_matrix
+
 from final_project.data.mnist import get_dataloaders
-from final_project.utils import visualize_latents_vae
+from final_project.utils import visualize_latents_vae, extract_latents_vae
 from final_project.utils.helpers import load_model
-from final_project.utils.visualize_latents_vae import extract_latents_vae
-from pyclustering.cluster.kmedoids import kmedoids
-from pyclustering.cluster.center_initializer import kmeans_plusplus_initializer
-from pyclustering.utils import calculate_distance_matrix
 
 # def compute_geodesic_matrix(latents, k=10):
 #     """Building a kNN graph and computing the geodesic distance matrix."""
@@ -41,6 +39,18 @@ def compute_geodesic_matrix(latents, k=10):
     return geodesic_matrix
 
 def cluster_with_kmedoids(distance_matrix, n_clusters=10):
+    """Cluster using K-Medoids with a precomputed geodesic distance matrix."""
+    kmedoids = KMedoids(
+        n_clusters=n_clusters,
+        metric='precomputed',
+        init='k-medoids++',
+        random_state=42
+    )
+    kmedoids.fit(distance_matrix)
+    return kmedoids.labels_
+
+""" 
+def cluster_with_kmedoids(distance_matrix, n_clusters=10):
     initial_medoids = kmeans_plusplus_initializer(distance_matrix, n_clusters, random_state=42).initialize()
 
     # Initialize KMedoids
@@ -59,20 +69,35 @@ def cluster_with_kmedoids(distance_matrix, n_clusters=10):
         for point_idx in cluster:
             labels[point_idx] = cluster_idx
 
-    return labels
+    return labels """
 
 def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print("Using device:", device)
     model_path = "src/final_project/checkpoints/vae.pth"
     model = load_model('vae', model_path, device)
-    train_loader, _ = get_dataloaders(batch_size=128)
-    
-    latents, _ = extract_latents_vae(model, train_loader, device)
-    geodesic_matrix = compute_geodesic_matrix(latents, k=10)
-    cluster_labels = cluster_with_kmedoids(geodesic_matrix, n_clusters=10)
-    visualize_latents_vae(latents, cluster_labels, save_path='src/final_project/outputs/geodesic_kmedoids_latent_plot.png')
+    print("Model loaded.")
 
-    print("Cluster labels:", cluster_labels)
+    train_loader, _ = get_dataloaders(batch_size=128)
+    print("Data loaded.")
+
+    latents, _ = extract_latents_vae(model, train_loader, device)
+    print("Latents extracted:", latents.shape)
+    latents = latents[:1000]  # Test on a subset of latents
+
+    geodesic_matrix = compute_geodesic_matrix(latents, k=10)
+    print("Geodesic matrix computed.")
+
+    cluster_labels = cluster_with_kmedoids(geodesic_matrix, n_clusters=10)
+    print("Clustering done.")
+
+    visualize_latents_vae(
+        latents,
+        cluster_labels,
+        save_path='src/final_project/outputs/geodesic_kmedoids_latent_plot.png'
+    )
+    print("Visualization saved.")
+
 
 if __name__ == "__main__":
     main()
