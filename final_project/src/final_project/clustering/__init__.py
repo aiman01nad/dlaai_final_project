@@ -1,1 +1,1 @@
-from .geodesic_kmeans import compute_geodesic_matrix, cluster_with_kmedoids, build_codebook
+from .geodesic_kmeans import build_knn_graph, choose_medoids, assign_clusters_geodesically, build_codebook
