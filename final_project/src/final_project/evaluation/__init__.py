@@ -1,1 +1,1 @@
-from .visualization import visualize_latents, visualize_codebook
+from .visualization import visualize_latents_tsne, visualize_decoded_medoids, visualize_latents_pca
