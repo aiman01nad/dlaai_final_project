@@ -1,3 +1,4 @@
+from matplotlib import pyplot as plt
 import torch
 import numpy as np
 from sklearn.neighbors import NearestNeighbors
@@ -6,27 +7,9 @@ from scipy.sparse.csgraph import shortest_path
 from scipy.sparse import csr_matrix
 
 from final_project.data.mnist import get_dataloaders
-from final_project.utils import visualize_latents_vae, extract_latents_vae
-from final_project.utils.helpers import load_model
+from final_project.utils.helpers import load_config, load_model, set_seed, extract_latents
 
-# def compute_geodesic_matrix(latents, k=10):
-#     """Building a kNN graph and computing the geodesic distance matrix."""
-#     nbrs = NearestNeighbors(n_neighbors=k).fit(latents)
-#     distances, indices = nbrs.kneighbors(latents)
-
-#     # Build the adjancy matrix
-#     N = latents.shape[0] # Shape of latents: (N, latent_dim)
-#     adj = np.full((N, N), np.inf)
-#     for i in range(N):
-#         for j in range(k):
-#             adj[i, indices[i][j]] = distances[i][j]
-#             adj[indices[i][j], i] = distances[i][j] # matrix is symmetric
-
-#     adj = csr_matrix(adj) # Ensure the matrix is sparse to save memory
-#     geodesic_matrix = shortest_path(adj, directed=False)
-#     return geodesic_matrix
-
-def compute_geodesic_matrix(latents, k=10):
+def compute_geodesic_matrix(latents, k):
     """Efficient kNN graph + geodesic distance computation using sparse matrices."""
     nbrs = NearestNeighbors(n_neighbors=k, algorithm='auto').fit(latents)
     knn_graph = nbrs.kneighbors_graph(mode='distance')  # Sparse matrix (N x N)
@@ -36,10 +19,11 @@ def compute_geodesic_matrix(latents, k=10):
 
     # Compute geodesic (shortest-path) distances
     geodesic_matrix = shortest_path(adj, directed=False)
+    print("Geodesic matrix computed.")
+
     return geodesic_matrix
 
-def cluster_with_kmedoids(distance_matrix, n_clusters=10):
-    """Cluster using K-Medoids with a precomputed geodesic distance matrix."""
+def cluster_with_kmedoids(distance_matrix, n_clusters):
     kmedoids = KMedoids(
         n_clusters=n_clusters,
         metric='precomputed',
@@ -47,57 +31,58 @@ def cluster_with_kmedoids(distance_matrix, n_clusters=10):
         random_state=42
     )
     kmedoids.fit(distance_matrix)
-    return kmedoids.labels_
 
-""" 
-def cluster_with_kmedoids(distance_matrix, n_clusters=10):
-    initial_medoids = kmeans_plusplus_initializer(distance_matrix, n_clusters, random_state=42).initialize()
-
-    # Initialize KMedoids
-    kmedoids_instance = kmedoids(data=distance_matrix, 
-                                 initial_index_medoids=initial_medoids, 
-                                 data_type='distance_matrix')
-    kmedoids_instance.process()
-
-    clusters = kmedoids_instance.get_clusters()
-    medoids = kmedoids_instance.get_medoids()
-
-    # Convert clusters to a list of cluster labels
-    n_samples = distance_matrix.shape[0]
-    labels = np.empty(n_samples, dtype=int)
-    for cluster_idx, cluster in enumerate(clusters):
-        for point_idx in cluster:
-            labels[point_idx] = cluster_idx
-
-    return labels """
-
-def main():
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print("Using device:", device)
-    model_path = "src/final_project/checkpoints/vae.pth"
-    model = load_model('vae', model_path, device)
-    print("Model loaded.")
-
-    train_loader, _ = get_dataloaders(batch_size=128)
-    print("Data loaded.")
-
-    latents, _ = extract_latents_vae(model, train_loader, device)
-    print("Latents extracted:", latents.shape)
-    latents = latents[:1000]  # Test on a subset of latents
-
-    geodesic_matrix = compute_geodesic_matrix(latents, k=10)
-    print("Geodesic matrix computed.")
-
-    cluster_labels = cluster_with_kmedoids(geodesic_matrix, n_clusters=10)
+    np.save('src/final_project/outputs/geodesic/kmedoids_labels.npy', kmedoids.labels_)
     print("Clustering done.")
 
-    visualize_latents_vae(
-        latents,
-        cluster_labels,
-        save_path='src/final_project/outputs/geodesic_kmedoids_latent_plot.png'
-    )
-    print("Visualization saved.")
+    return kmedoids.labels_, kmedoids.medoid_indices_
 
+def build_codebook(latents, medoid_indices):
+    """Builds a codebook from the latents based on cluster labels and medoid indices."""
+    codebook_latents = latents[medoid_indices] # Shape: (n_clusters, latent_dim)
+
+    np.save('src/final_project/outputs/geodesic/codebook_latents.npy', codebook_latents)
+    return codebook_latents
+
+def visualize_codebook(codebook_latents, model, device):
+    z = torch.tensor(codebook_latents).float().to(device)
+    recon = model.decoder(z).cpu().detach()
+
+    plt.figure(figsize=(10, 2))
+    for i, img in enumerate(recon):
+        plt.subplot(1, 10, i+1)
+        plt.imshow(img.squeeze(), cmap="gray")
+        plt.title(f"Code {i}")
+        plt.axis("off")
+    plt.suptitle("Decoded Medoids (Codebook Entries)")
+    plt.show()
+
+    print("Codebook built and visualized.")
+
+def main():
+    set_seed()
+    vae_config = load_config("src/final_project/configs/vae_config.yaml")
+    batch_size = vae_config["training"]["batch_size"]
+    clustering_config = load_config("src/final_project/configs/clustering_config.yaml")
+    k_neighbors = clustering_config["k_neighbors"]
+    n_clusters = clustering_config["n_clusters"]
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print("Using device:", device)
+
+    model_path = "src/final_project/checkpoints/vae.pth"
+    model = load_model('vae', model_path, device)
+
+    train_loader, _ = get_dataloaders(batch_size=batch_size)
+
+    latents, _ = extract_latents(model, train_loader, device)
+    latents = latents[:1000]  # Test on a subset of latents
+    geodesic_matrix = compute_geodesic_matrix(latents, k=k_neighbors)
+    
+    _, medoid_indices = cluster_with_kmedoids(geodesic_matrix, n_clusters=n_clusters)
+
+    codebook_latents = build_codebook(latents, medoid_indices)
+    visualize_codebook(codebook_latents, model, device)
 
 if __name__ == "__main__":
     main()

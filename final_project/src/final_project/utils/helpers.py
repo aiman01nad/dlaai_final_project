@@ -5,6 +5,7 @@ import torch
 import yaml
 
 from final_project.models.vae import VAE
+from final_project.models.vqvae import VQVAE
 
 def save_model(model, name):
     root = Path(__file__).resolve().parents[1]  # Go up to project root
@@ -39,3 +40,52 @@ def set_seed(seed=42):
 
     torch.backends.cudnn.benchmark = True
     torch.backends.cudnn.deterministic = False
+
+def extract_latents(model, dataloader, device):
+    model = model.to(device)
+    model.eval()
+    latents, labels = [], []
+
+    if isinstance(model, VAE):
+        with torch.no_grad():
+            for x, y in dataloader:
+                x = x.to(device)
+                mu, _ = model.encoder(x) # Using the mean of the posterior
+                latents.append(mu.cpu())
+                labels.append(y)
+    
+    elif isinstance(model, VQVAE):
+        with torch.no_grad():
+            for x, y in dataloader:
+                x = x.to(device)
+                z = model.encoder(x) # encoder output (continous latent)
+                latents.append(z.cpu().view(x.size(0), -1))  # flatten spatial dims
+                labels.append(y)
+    
+    latents = torch.cat(latents).numpy() # Shape: (N, latent_dim)
+    labels = torch.cat(labels).numpy()
+    
+    if isinstance(model, VAE):
+        np.save('src/final_project/outputs/vae_latents.npy', latents)
+        np.save('src/final_project/outputs/vae_labels.npy', labels)
+    
+    elif isinstance(model, VQVAE):
+        np.save('src/final_project/outputs/vqvae_latents.npy', latents)
+        np.save('src/final_project/outputs/vqvae_labels.npy', labels)
+
+    print(f"Latents and labels saved to {Path('src/final_project/outputs')}")
+    print(f"Latents shape: {latents.shape}, Labels shape: {labels.shape}")
+
+    return latents, labels
+
+def load_latents_and_labels(model_type):
+    if model_type == 'vae':
+        latents = np.load('src/final_project/outputs/vae_latents.npy')
+        labels = np.load('src/final_project/outputs/vae_labels.npy')
+    elif model_type == 'vqvae':
+        latents = np.load('src/final_project/outputs/vqvae_latents.npy')
+        labels = np.load('src/final_project/outputs/vqvae_labels.npy')
+    else:
+        raise ValueError("Invalid model type. Choose 'vae' or 'vqvae'.")
+    
+    return latents, labels
