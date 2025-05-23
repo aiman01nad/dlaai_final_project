@@ -66,12 +66,12 @@ def extract_latents(model, dataloader, device):
     labels = torch.cat(labels).numpy()
     
     if isinstance(model, VAE):
-        np.save('src/final_project/outputs/vae_latents.npy', latents)
-        np.save('src/final_project/outputs/vae_labels.npy', labels)
+        np.save('src/final_project/outputs/vae/vae_latents.npy', latents)
+        np.save('src/final_project/outputs/vae/vae_labels.npy', labels)
     
     elif isinstance(model, VQVAE):
-        np.save('src/final_project/outputs/vqvae_latents.npy', latents)
-        np.save('src/final_project/outputs/vqvae_labels.npy', labels)
+        np.save('src/final_project/outputs/vqvae/vqvae_latents.npy', latents)
+        np.save('src/final_project/outputs/vqvae/vqvae_labels.npy', labels)
 
     print(f"Latents and labels saved to {Path('src/final_project/outputs')}")
     print(f"Latents shape: {latents.shape}, Labels shape: {labels.shape}")

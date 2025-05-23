@@ -6,7 +6,7 @@ from final_project.data import get_dataloaders
 from final_project.utils.helpers import set_seed
 
 def main():
-    set_seed(42)
+    set_seed()
 
 if __name__ == "__main__":
     main()

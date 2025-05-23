@@ -1,1 +1,1 @@
-from .visualization import visualize_latents
+from .visualization import visualize_latents, visualize_codebook

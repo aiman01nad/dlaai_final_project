@@ -1,5 +1,6 @@
 from matplotlib import pyplot as plt
 from sklearn.manifold import TSNE
+import torch
 
 def visualize_latents(latents, labels, save_path):
     tsne = TSNE(n_components=2, random_state=42)
@@ -15,3 +16,18 @@ def visualize_latents(latents, labels, save_path):
     plt.savefig(save_path)
 
     print(f"Latent space visualization saved to {save_path}")
+
+def visualize_codebook(codebook_latents, model, device):
+    z = torch.tensor(codebook_latents).float().to(device)
+    recon = model.decoder(z).cpu().detach()
+
+    plt.figure(figsize=(10, 2))
+    for i, img in enumerate(recon):
+        plt.subplot(1, 10, i+1)
+        plt.imshow(img.squeeze(), cmap="gray")
+        plt.title(f"Code {i}")
+        plt.axis("off")
+    plt.suptitle("Decoded Medoids (Codebook Entries)")
+    plt.show()
+
+    print("Codebook visualized.")
