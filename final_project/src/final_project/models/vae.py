@@ -22,17 +22,13 @@ class Encoder(nn.Module):
 class Decoder(nn.Module):
     def __init__(self, embedding_dim, hidden_dim):
         super().__init__()
-        self.hidden_dim = hidden_dim
-        self.fc = nn.Linear(embedding_dim, hidden_dim*2*7*7)
-        self.conv2 = nn.ConvTranspose2d(hidden_dim*2, hidden_dim, 4, stride=2, padding=1) # Output: (hidden_dim, 14, 14)
+        self.conv2 = nn.ConvTranspose2d(embedding_dim, hidden_dim, 4, stride=2, padding=1) # Output: (hidden_dim, 14, 14)
         self.conv1 = nn.ConvTranspose2d(hidden_dim, 1, 4, stride=2, padding=1) # Output: (1, 28, 28)
         self.activation = nn.ReLU()
 
     def forward(self, x):
-        x = self.fc(x)
-        x = x.view(x.size(0), self.hidden_dim*2, 7, 7)
         x = self.activation(self.conv2(x))
-        x = torch.sigmoid(self.conv1(x)) # Sigmoid activation for output layer
+        x = torch.sigmoid(self.conv1(x))
         return x
     
 class VAE(nn.Module):
