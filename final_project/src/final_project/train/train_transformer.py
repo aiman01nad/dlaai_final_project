@@ -6,9 +6,9 @@ import numpy as np
 
 from final_project.utils.helpers import load_config, save_model, set_seed
 
-def train_transformer(model: Transformer, codes, seq_len, batch_size, num_embeddings, epochs, lr, device, save_name):
+def train_transformer(model: Transformer, codes, seq_len, batch_size, num_embeddings, epochs, lr, weight_decay, device, save_name):
     train_loader, _, val_loader = get_dataloaders(codes, seq_len, batch_size)
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     
     for epoch in range(epochs):
         model.train()
@@ -53,6 +53,7 @@ def main():
     batch_size = transformer_config["training"]["batch_size"]
     epochs = transformer_config["training"]["epochs"]
     lr = float(transformer_config["training"]["learning_rate"])
+    weight_decay = float(transformer_config["training"]["weight_decay"])
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     save_name = "transformer.pth"
@@ -65,7 +66,7 @@ def main():
 
     codes = np.load("src/final_project/outputs/geodesic/kmedoids_labels.npy")  # shape: (60000,))
 
-    model = train_transformer(model, codes, seq_len, batch_size, num_embeddings, epochs, lr, device, save_name)
+    model = train_transformer(model, codes, seq_len, batch_size, num_embeddings, epochs, lr, weight_decay, device, save_name)
 
 if __name__ == "__main__":
     main()
