@@ -1,32 +1,42 @@
 import torch
 from torch.utils.data import DataLoader
 from final_project.models.transformer import Transformer
-from final_project.data.discrete_codes import CodeSequenceDataset
+from final_project.data.discrete_codes import CodeSequenceDataset, get_dataloaders
 import numpy as np
 
 from final_project.utils.helpers import load_config, save_model, set_seed
 
-def train_transformer(model: Transformer, dataset: CodeSequenceDataset, batch_size, num_embeddings, epochs, lr, device, save_name):
-    dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+def train_transformer(model: Transformer, codes, seq_len, batch_size, num_embeddings, epochs, lr, device, save_name):
+    train_loader, _, val_loader = get_dataloaders(codes, seq_len, batch_size)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     
     for epoch in range(epochs):
         model.train()
         total_loss = 0
 
-        for xb, yb in dataloader:
+        for xb, yb in train_loader:
             xb, yb = xb.to(device), yb.to(device)
-            logits = model(xb)  # (B, seq_len, num_embeddings)
+            logits = model(xb)
             loss = torch.nn.functional.cross_entropy(logits.view(-1, num_embeddings), yb.view(-1))
             optimizer.zero_grad()
-            loss.backward() 
+            loss.backward()
             optimizer.step()
             total_loss += loss.item()
 
-        print(f"Epoch {epoch}: Loss = {total_loss / len(dataloader):.4f}")
+        # Validation phase
+        model.eval()
+        val_loss = 0
+        with torch.no_grad():
+            for x_val, y_val in val_loader:
+                x_val, y_val = x_val.to(device), y_val.to(device)
+                val_logits = model(x_val)
+                val_loss += torch.nn.functional.cross_entropy(val_logits.view(-1, num_embeddings), y_val.view(-1)).item()
+
+        print(f"Epoch {epoch}: Train Loss = {total_loss / len(train_loader):.4f}, Val Loss = {val_loss / len(val_loader):.4f}")
 
     save_model(model, save_name)
     return model
+
 
 def main():
     set_seed()
@@ -53,10 +63,9 @@ def main():
                         dropout=dropout)
     model = model.to(device)
 
-    codes = np.load("src/final_project/outputs/geodesic/kmedoids_labels.npy")  # shape: (60000,)
-    dataset = CodeSequenceDataset(codes, seq_len)
+    codes = np.load("src/final_project/outputs/geodesic/kmedoids_labels.npy")  # shape: (60000,))
 
-    model = train_transformer(model, dataset, batch_size, num_embeddings, epochs, lr, device, save_name)
+    model = train_transformer(model, codes, seq_len, batch_size, num_embeddings, epochs, lr, device, save_name)
 
 if __name__ == "__main__":
     main()
