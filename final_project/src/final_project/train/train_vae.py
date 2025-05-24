@@ -1,7 +1,7 @@
 import torch
 import torch.nn.functional as F
 from final_project.models import VAE
-from final_project.data import get_dataloaders
+from final_project.data.mnist import get_dataloaders
 from final_project.utils import save_model, load_config, set_seed
 
 def train_vae(model: VAE, epochs, lr, weight_decay, batch_size, device, beta, save_name):
@@ -40,8 +40,8 @@ def main():
     embedding_dim = vae_config["model"]["embedding_dim"]
 
     epochs = vae_config["training"]["epochs"]
-    lr = vae_config["training"]["learining_rate"]
-    weight_decay = vae_config["training"]["weight_decay"]
+    lr = float(vae_config["training"]["learning_rate"])
+    weight_decay = float(vae_config["training"]["weight_decay"])
     batch_size = vae_config["training"]["batch_size"]
     beta = vae_config["training"]["beta"]
 
