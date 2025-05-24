@@ -50,9 +50,10 @@ def extract_latents(model, dataloader, device):
         with torch.no_grad():
             for x, y in dataloader:
                 x = x.to(device)
-                mu, _ = model.encoder(x) # (batch, embedding_dim, 7, 7)
-                latents.append(mu.cpu().view(x.size(0), -1))  # flatten to (batch, embedding_dim*7*7)
-                labels.append(y)
+                mu, _ = model.encoder(x)  # (B, C, H, W)
+                mu = mu.permute(0, 2, 3, 1).reshape(-1, mu.shape[1])  # (B × H × W, C)
+                latents.append(mu.cpu())
+                labels.append(y.repeat_interleave(7 * 7))  # match labels to spatial positions
     
     elif isinstance(model, VQVAE):
         with torch.no_grad():
