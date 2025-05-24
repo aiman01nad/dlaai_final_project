@@ -50,8 +50,8 @@ def extract_latents(model, dataloader, device):
         with torch.no_grad():
             for x, y in dataloader:
                 x = x.to(device)
-                mu, _ = model.encoder(x) # Using the mean of the posterior
-                latents.append(mu.cpu())
+                mu, _ = model.encoder(x) # (batch, embedding_dim, 7, 7)
+                latents.append(mu.cpu().view(x.size(0), -1))  # flatten to (batch, embedding_dim*7*7)
                 labels.append(y)
     
     elif isinstance(model, VQVAE):
@@ -62,7 +62,7 @@ def extract_latents(model, dataloader, device):
                 latents.append(z.cpu().view(x.size(0), -1))  # flatten spatial dims
                 labels.append(y)
     
-    latents = torch.cat(latents).numpy() # Shape: (N, latent_dim)
+    latents = torch.cat(latents).numpy()
     labels = torch.cat(labels).numpy()
     
     if isinstance(model, VAE):
