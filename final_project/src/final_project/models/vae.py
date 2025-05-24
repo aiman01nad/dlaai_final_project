@@ -5,20 +5,19 @@ class Encoder(nn.Module):
         super().__init__()
         self.conv1 = nn.Conv2d(1, hidden_dim, 4, stride=2, padding=1) # Input: (1, 28, 28) -> Output: (hidden_dim, 14, 14)
         self.conv2 = nn.Conv2d(hidden_dim, hidden_dim*2, 4, stride=2, padding=1) # Output: (hidden_dim*2, 7, 7)
-        self.fc_mu = nn.Linear(hidden_dim*2*7*7, embedding_dim)
-        self.fc_logvar = nn.Linear(hidden_dim*2*7*7, embedding_dim)
+        self.conv_mu = nn.Conv2d(hidden_dim*2, embedding_dim, 1)  # Output: (embedding_dim, 7, 7)
+        self.conv_logvar = nn.Conv2d(hidden_dim*2, embedding_dim, 1) # Output: (embedding_dim, 7, 7)
+
         self.activation = nn.ReLU()
 
     def forward(self, x):
         x = self.activation(self.conv1(x))
         x = self.activation(self.conv2(x))
 
-        x = x.view(x.shape[0], -1)
-
-        x_mu = self.fc_mu(x)
-        x_logvar = self.fc_logvar(x)
+        mu = self.conv_mu(x)
+        logvar = self.conv_logvar(x)
         
-        return x_mu, x_logvar
+        return mu, logvar
 
 class Decoder(nn.Module):
     def __init__(self, embedding_dim, hidden_dim):
