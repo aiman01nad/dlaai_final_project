@@ -44,10 +44,9 @@ def assign_clusters_geodesically(adj, medoid_indices, batch_size=50):
         print(f"Processing medoid batch {i} to {i + batch_size}")
         dists = dijkstra(csgraph=adj, directed=False, indices=batch_indices)
 
-        # Compare current batch distances to previously seen min distances
-        for j, medoid_idx in enumerate(batch_indices):
+        for j, _ in enumerate(batch_indices):
             mask = dists[j] < min_dist
-            labels[mask] = medoid_idx
+            labels[mask] = i + j  # Assign cluster index (0, 1, ..., n_clusters-1)
             min_dist[mask] = dists[j][mask]
 
     print("Cluster assignment complete.")
