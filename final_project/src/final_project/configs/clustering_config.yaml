@@ -1,2 +1,3 @@
 k_neighbors: 10
 n_clusters: 10
+n_landmarks: 5000

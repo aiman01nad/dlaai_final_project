@@ -174,6 +174,28 @@ wheels = [
 ]
 
 [[package]]
+name = "faiss-cpu"
+version = "1.8.0.post1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+    { name = "packaging" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/5e/a3/7213833216238e7dd7ef9f9a3a66bfb1ae24235e7fd32aad75afa3e78f3f/faiss_cpu-1.8.0.post1.tar.gz", hash = "sha256:5686af34414678c3d49c4fa8d774df7156e9cb48d7029071e56230e74b01cc13", size = 63668, upload-time = "2024-06-24T05:58:28.155Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/17/d2/c90a810b594d11f66b0162a08415029b7e056243a5023a7d5c719353a057/faiss_cpu-1.8.0.post1-cp311-cp311-macosx_10_14_x86_64.whl", hash = "sha256:8d4bade10cb63e9f9ff261751edd7eb097b1f4bf30be4d0d25d6f688559d795e", size = 7345873, upload-time = "2024-06-26T04:27:52.176Z" },
+    { url = "https://files.pythonhosted.org/packages/44/90/a21e37b01a302b8bcf1f30747eae1812d43f45e7f1a08bfa7da28c6647ce/faiss_cpu-1.8.0.post1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:20bd43eca3b7d77e71ea56b7a558cc28e900d8abff417eb285e2d92e95d934d4", size = 5979514, upload-time = "2024-06-24T05:57:51.06Z" },
+    { url = "https://files.pythonhosted.org/packages/c5/d2/32832d55f6ef6e4ac9316fd4169b1c62c88c4e0248b8e76499308b7d100e/faiss_cpu-1.8.0.post1-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:8542a87743a7f94ac656fd3e9592ad57e58b04d961ad2fe654a22a8ca59defdb", size = 3555039, upload-time = "2024-06-24T05:57:53.124Z" },
+    { url = "https://files.pythonhosted.org/packages/76/6c/256239bd142101cd2ce50d920622ab6d5a03742eabc462db49d7910c69c7/faiss_cpu-1.8.0.post1-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ed46928de3dc20170b10fec89c54075a11383c2aaf4f119c63e0f6ae5a507d74", size = 27045872, upload-time = "2024-06-24T05:57:55.315Z" },
+    { url = "https://files.pythonhosted.org/packages/4c/e1/657eb537027b2d7aa0f0ccfc58aee6fe0252ea3d9e49472aecc5c7f30992/faiss_cpu-1.8.0.post1-cp311-cp311-win_amd64.whl", hash = "sha256:4fa5fc8ea210b919aa469e27d6687e50052db906e7fec3f2257178b1384fa18b", size = 14588251, upload-time = "2024-06-24T05:57:58.139Z" },
+    { url = "https://files.pythonhosted.org/packages/e5/4f/5d063231073917edfe1af57d1fcb2e281f60eca64694fb062428d80a1966/faiss_cpu-1.8.0.post1-cp312-cp312-macosx_10_14_x86_64.whl", hash = "sha256:96aec0d08a3099883af3a9b6356cfe736e8bd879318a940a27e9d1ae6f33d788", size = 7376527, upload-time = "2024-06-26T04:27:54.145Z" },
+    { url = "https://files.pythonhosted.org/packages/75/b9/eb43cbcbdc8c1177f1f275659920fb002c18e381253efb7f6431471f87df/faiss_cpu-1.8.0.post1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:92b06147fa84732ecdc965922e8ef50dc7011ef8be65821ff4abb2118cb5dce0", size = 5983954, upload-time = "2024-06-24T05:58:00.025Z" },
+    { url = "https://files.pythonhosted.org/packages/19/5e/1fd33bee1ad83c12467d2850ecb7d9a6d28afb9a2c7aa88b92dfe75f3167/faiss_cpu-1.8.0.post1-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:709ef9394d1148aef70dbe890edbde8c282a4a2e06a8b69ab64f65e90f5ba572", size = 3559706, upload-time = "2024-06-24T05:58:02.129Z" },
+    { url = "https://files.pythonhosted.org/packages/ba/91/6460e628d7d1cfbce2f1a62bdd617619e2d8fb3d4428b5e4a1e2858aeb61/faiss_cpu-1.8.0.post1-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:327a9c30971bf72cd8392b15eb4aff5d898c453212eae656dfaa3ba555b9ca0c", size = 27046631, upload-time = "2024-06-24T05:58:04.439Z" },
+    { url = "https://files.pythonhosted.org/packages/3a/0a/d18ff177cab09587918b6e67ce75b7e0a2b90ea0b4fdc7c3535cca39c5e8/faiss_cpu-1.8.0.post1-cp312-cp312-win_amd64.whl", hash = "sha256:8756f1d93faba56349883fa2f5d47fe36bb2f11f789200c6b1c691ef805485f2", size = 14591209, upload-time = "2024-06-24T05:58:07.283Z" },
+]
+
+[[package]]
 name = "filelock"
 version = "3.18.0"
 source = { registry = "https://pypi.org/simple" }
@@ -187,6 +209,7 @@ name = "final-project"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
+    { name = "faiss-cpu" },
     { name = "lightning" },
     { name = "matplotlib" },
     { name = "numpy" },
@@ -195,10 +218,12 @@ dependencies = [
     { name = "seaborn" },
     { name = "torch" },
     { name = "torchvision" },
+    { name = "tqdm" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "faiss-cpu", specifier = ">=1.8.0.post1" },
     { name = "lightning", specifier = ">=2.5.1.post0" },
     { name = "matplotlib", specifier = ">=3.10.3" },
     { name = "numpy", specifier = "==1.24.4" },
@@ -207,6 +232,7 @@ requires-dist = [
     { name = "seaborn", specifier = ">=0.13.2" },
     { name = "torch", specifier = ">=2.7.0" },
     { name = "torchvision", specifier = ">=0.22.0" },
+    { name = "tqdm", specifier = ">=4.67.1" },
 ]
 
 [[package]]
