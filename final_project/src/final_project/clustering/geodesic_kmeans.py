@@ -74,6 +74,7 @@ def main():
     model = load_model('vae', model_path, device)
 
     train_loader, _ = get_dataloaders(batch_size=batch_size)
+    
     latents, _ = extract_latents(model, train_loader, device)  # shape: (60000, latent_dim)
 
     # Build sparse kNN graph
@@ -84,7 +85,9 @@ def main():
 
     # Run Dijkstra from medoids, assign each point to closest
     labels = assign_clusters_geodesically(adj, medoid_indices)
-    np.save('src/final_project/outputs/geodesic/kmedoids_labels.npy', labels)
+    labels_reshaped = labels.reshape(60000, 7, 7)
+    np.save('outputs/geodesic/kmedoids_code_maps.npy', labels_reshaped)
+    #np.save('src/final_project/outputs/geodesic/kmedoids_labels.npy', labels)
 
     # Save codebook
     build_codebook(latents, medoid_indices)
