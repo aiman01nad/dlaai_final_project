@@ -50,34 +50,33 @@ def extract_latents(model, dataloader, device):
         with torch.no_grad():
             for x, y in dataloader:
                 x = x.to(device)
-                mu, _ = model.encoder(x)  # (B, C, H, W)
-                mu = mu.permute(0, 2, 3, 1).reshape(-1, mu.shape[1])  # (B × H × W, C)
-                latents.append(mu.cpu())
-                labels.append(y.repeat_interleave(7 * 7))  # match labels to spatial positions
-    
+                mu, _ = model.encoder(x)  # shape: [B, C, H, W]
+                latents.append(mu.cpu())  # keep full shape
+                labels.append(y)
+
     elif isinstance(model, VQVAE):
         with torch.no_grad():
             for x, y in dataloader:
                 x = x.to(device)
-                z = model.encoder(x) # encoder output (continous latent)
-                latents.append(z.cpu().view(x.size(0), -1))  # flatten spatial dims
+                z = model.encoder(x)  # shape: [B, C, H, W]
+                latents.append(z.cpu())
                 labels.append(y)
-    
-    latents = torch.cat(latents).numpy()
-    labels = torch.cat(labels).numpy()
-    
+
+    latents = torch.cat(latents, dim=0)  # shape: [N, C, H, W]
+    labels = torch.cat(labels, dim=0)
+
     if isinstance(model, VAE):
-        np.save('src/final_project/outputs/vae/vae_latents.npy', latents)
-        np.save('src/final_project/outputs/vae/vae_labels.npy', labels)
-    
+        np.save('src/final_project/outputs/vae/vae_latents.npy', latents.numpy())
+        np.save('src/final_project/outputs/vae/vae_labels.npy', labels.numpy())
+
     elif isinstance(model, VQVAE):
-        np.save('src/final_project/outputs/vqvae/vqvae_latents.npy', latents)
-        np.save('src/final_project/outputs/vqvae/vqvae_labels.npy', labels)
+        np.save('src/final_project/outputs/vqvae/vqvae_latents.npy', latents.numpy())
+        np.save('src/final_project/outputs/vqvae/vqvae_labels.npy', labels.numpy())
 
     print(f"Latents and labels saved to {Path('src/final_project/outputs')}")
     print(f"Latents shape: {latents.shape}, Labels shape: {labels.shape}")
 
-    return latents, labels
+    return latents.numpy(), labels.numpy()
 
 def load_latents_and_labels(model_type):
     if model_type == 'vae':
