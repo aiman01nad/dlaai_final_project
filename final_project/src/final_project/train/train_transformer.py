@@ -1,7 +1,6 @@
 import torch
-from torch.utils.data import DataLoader
 from final_project.models.transformer import Transformer
-from final_project.data.discrete_codes import CodeSequenceDataset, get_dataloaders
+from final_project.data.discrete_codes import get_dataloaders
 import numpy as np
 
 from final_project.utils.helpers import load_config, save_model, set_seed
