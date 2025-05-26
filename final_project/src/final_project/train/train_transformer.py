@@ -66,7 +66,7 @@ def main():
     code_maps = np.load("src/final_project/outputs/geodesic/kmedoids_code_maps.npy") # shape: (60000, 7, 7)
     code_map_flat = code_maps.reshape(60000, -1)  # shape: (60000, 49)
 
-    model = train_transformer(model, code_map_flat, seq_len, batch_size, num_embeddings, epochs, lr, weight_decay, device, save_name)
+    model = train_transformer(model, code_map_flat, batch_size, num_embeddings, epochs, lr, weight_decay, device, save_name)
 
 if __name__ == "__main__":
     main()
