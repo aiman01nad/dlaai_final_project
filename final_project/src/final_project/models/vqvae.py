@@ -5,8 +5,8 @@ from torch.nn import functional as F
 class Encoder(nn.Module):
     def __init__(self, hidden_dim, embedding_dim):
         super().__init__()
-        self.conv1 = nn.Conv2d(1, hidden_dim, 4, stride=2, padding=1)
-        self.conv2 = nn.Conv2d(hidden_dim, embedding_dim, 4, stride=2, padding=1)
+        self.conv1 = nn.Conv2d(1, hidden_dim, 4, stride=2, padding=1) # Input: (1, 28, 28) -> Output: (hidden_dim, 14, 14)
+        self.conv2 = nn.Conv2d(hidden_dim, embedding_dim, 4, stride=2, padding=1) # Output: (embedding_dim, 7, 7)
         
     def forward(self, x):
         x = F.relu(self.conv1(x))
@@ -16,8 +16,8 @@ class Encoder(nn.Module):
 class Decoder(nn.Module):
     def __init__(self, embedding_dim, hidden_dim):
         super().__init__()
-        self.conv1 = nn.ConvTranspose2d(embedding_dim, hidden_dim, 4, stride=2, padding=1)
-        self.conv2 = nn.ConvTranspose2d(hidden_dim, 1, 4, stride=2, padding=1)
+        self.conv1 = nn.ConvTranspose2d(embedding_dim, hidden_dim, 4, stride=2, padding=1) # Input: (embedding_dim, 7, 7) -> Output: (hidden_dim, 14, 14)
+        self.conv2 = nn.ConvTranspose2d(hidden_dim, 1, 4, stride=2, padding=1) # Output: (1, 28, 28)
 
     def forward(self, x):
         x = F.relu(self.conv1(x))

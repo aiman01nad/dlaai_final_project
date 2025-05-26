@@ -1,9 +1,8 @@
 import torch
 import torch.nn.functional as F
 from final_project.models import VQVAE
-from final_project.data import get_dataloaders
-from final_project.utils import save_model
-from final_project.utils.helpers import load_config, set_seed
+from final_project.data.mnist import get_dataloaders
+from final_project.utils import save_model, load_config, set_seed
 
 def train_vqvae(model: VQVAE, epochs, lr, batch_size, device, save_name):
     train_loader, _ = get_dataloaders(batch_size)
