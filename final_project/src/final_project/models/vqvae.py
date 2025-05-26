@@ -61,7 +61,7 @@ class VectorQuantizer(nn.Module):
         # Straight-through estimator
         quantized = z + (quantized - z).detach()
 
-        return quantized, loss
+        return quantized, loss, encoding_indices.view(z.shape[0], z.shape[2], z.shape[3])
 
 class VQVAE(nn.Module):
     def __init__(self, hidden_dim, embedding_dim, num_embeddings, commitment_cost):
@@ -72,6 +72,6 @@ class VQVAE(nn.Module):
 
     def forward(self, x):
         z = self.encoder(x)
-        quantized, vq_loss = self.vq(z)
+        quantized, vq_loss, indices = self.vq(z)
         x_recon = self.decoder(quantized)
-        return x_recon, vq_loss
+        return x_recon, vq_loss, indices
