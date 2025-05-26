@@ -1,6 +1,6 @@
 model: 
   num_embeddings: 10
-  seq_len: 64
+  seq_len: 48
   embedding_dim: 128
   nheads: 4
   num_layers: 4
