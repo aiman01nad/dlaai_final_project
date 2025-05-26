@@ -1,3 +1,3 @@
 from .visualization import visualize_codebook, visualize_latents_pca, visualize_latents_tsne, visualize_decoded_medoids, plot_latent_clusters
-from .clustering_eval import compute_cluster_stats, assign_clusters
+from .clustering_eval import compute_cluster_stats, assign_clusters, sparse_geodesic_sampling
 from .reconstruction_eval import reconstruction_error

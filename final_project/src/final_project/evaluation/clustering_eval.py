@@ -15,3 +15,20 @@ def assign_clusters(latents, landmark_dists):
     dists = landmark_dists[:, np.arange(N)]  # shape: (num_landmarks, N)
     assignments = np.argmin(dists, axis=0)   # (N,)
     return assignments
+
+def sparse_geodesic_sampling(landmark_dists, sample_size=10000):
+    """Sample approximate geodesic distances between random pairs of points."""
+    N = landmark_dists.shape[1]
+    pairs = np.random.randint(0, N, size=(sample_size, 2))
+    approx_dists = np.zeros(sample_size, dtype=np.float32)
+    print(f"Sampling {sample_size} approximate geodesic distances...")
+    for idx, (i, j) in enumerate(tqdm(pairs, desc="Sampling geodesic distances")):
+        approx_dists[idx] = approximate_geodesic_distance(i, j, landmark_dists)
+    print("✅ Sampling done.")
+    return pairs, approx_dists
+
+def approximate_geodesic_distance(i, j, landmark_dists):
+    """Approximate geodesic distance between two points using landmark distances."""
+    d_i = landmark_dists[:, i]
+    d_j = landmark_dists[:, j]
+    return np.min(d_i + d_j)

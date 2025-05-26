@@ -52,7 +52,7 @@ def build_annoy_knn_graph(latents, k, metric='euclidean'):
     return adj
 
 def choose_landmark_medoids(latents, n_clusters, n_landmarks):
-    """Landmark-based geodesic clustering using K-Medoids."""
+    """Selects landmark medoids using K-Medoids clustering with Euclidean distance as a scalable alternative to using geodesic distances."""
     indices = np.random.choice(len(latents), size=n_landmarks, replace=False)
     landmark_latents = latents[indices]
 
@@ -68,29 +68,11 @@ def compute_landmark_distances(adj, medoid_indices):
     print("✅ Landmark distance matrix computed.")
     return dists
 
-def approximate_geodesic_distance(i, j, landmark_dists):
-    """Approximate geodesic distance between two points using landmark distances."""
-    d_i = landmark_dists[:, i]
-    d_j = landmark_dists[:, j]
-    return np.min(d_i + d_j)
-
-def sparse_geodesic_sampling(landmark_dists, sample_size=10000):
-    """Sample approximate geodesic distances between random pairs of points."""
-    N = landmark_dists.shape[1]
-    pairs = np.random.randint(0, N, size=(sample_size, 2))
-    approx_dists = np.zeros(sample_size, dtype=np.float32)
-    print(f"Sampling {sample_size} approximate geodesic distances...")
-    for idx, (i, j) in enumerate(tqdm(pairs, desc="Sampling geodesic distances")):
-        approx_dists[idx] = approximate_geodesic_distance(i, j, landmark_dists)
-    print("✅ Sampling done.")
-    return pairs, approx_dists
-
 def build_codebook(latents, medoid_indices):
     """Builds a codebook from the medoid latent vectors."""
     codebook_latents = latents[medoid_indices]
     np.save('src/final_project/outputs/geodesic/codebook_latents.npy', codebook_latents)
     print(f"Saved codebook latents: shape {codebook_latents.shape}")
-    return codebook_latents
 
 def main():
     set_seed()
@@ -112,7 +94,8 @@ def main():
     latents = latents.astype(np.float32)
     # Flatten 4D latents [N, C, H, W] to [N, D]
     N, C, H, W = latents.shape
-    latents = latents.reshape(N, -1)  # Shape: [N, C*H*W]
+    # ✅ Flatten spatial dimensions, keep channels as features
+    latents = latents.transpose(0, 2, 3, 1).reshape(-1, C)  # Shape: [N * H * W, C]
 
     # Normalize for cosine/Euclidean similarity (if needed)
     latents /= np.linalg.norm(latents, axis=1, keepdims=True) + 1e-8
@@ -133,19 +116,13 @@ def main():
     np.save('src/final_project/outputs/geodesic/landmark_dists.npy', landmark_dists)
     print(f"✅ Saved landmark Dijkstra distances: shape {landmark_dists.shape}")
 
-    # Sample geodesic distances
-    pairs, approx_dists = profile_step("Sparse Geodesic Distance Sampling", sparse_geodesic_sampling, landmark_dists, sample_size=10000)
-    np.save('src/final_project/outputs/geodesic/approx_geodesic_pairs.npy', pairs)
-    np.save('src/final_project/outputs/geodesic/approx_geodesic_dists.npy', approx_dists)
+    labels = np.argmin(landmark_dists, axis=0)
+    print(f"Labels shape: {labels.shape}, labels reshaped: {labels.reshape(N, H, W).shape}")
+    np.save("src/final_project/outputs/geodesic/kmedoids_labels.npy", labels) # shape: (N * H * W,)
+    np.save("src/final_project/outputs/geodesic/kmedoids_code_maps.npy", labels.reshape(N, H, W))  # shape: (N, H, W)
 
     # Save codebook
-    _ = profile_step("Build Codebook", build_codebook, latents, medoid_indices)
-
-    # Save clustering config for reproducibility (optional)
-    import yaml
-    with open("src/final_project/outputs/geodesic/clustering_config_used.yaml", "w") as f:
-        yaml.dump(clustering_config, f)
-    print("✅ Saved config used for clustering.")
+    profile_step("Build Codebook", build_codebook, latents, medoid_indices) # saves codebook_latents.npy used by decoder
 
 if __name__ == "__main__":
     main()

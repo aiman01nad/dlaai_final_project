@@ -1,4 +1,4 @@
-from final_project.evaluation import reconstruction_error, compute_cluster_stats, assign_clusters, plot_latent_clusters, visualize_codebook
+from final_project.evaluation import reconstruction_error, compute_cluster_stats, assign_clusters, plot_latent_clusters, visualize_codebook, sparse_geodesic_sampling
 from final_project.utils.helpers import load_model, set_seed
 import torch
 import numpy as np
@@ -31,6 +31,11 @@ def main():
     # Visualization
     plot_latent_clusters(latents, labels, assignments, save_path='src/final_project/outputs/geodesic/geodesic_clusters_plot.png')
     visualize_codebook(model, codebook_latents.reshape(-1, embedding_dim, spatial_dim, spatial_dim))
+
+     # Sample geodesic distances
+    pairs, approx_dists = sparse_geodesic_sampling(landmark_dists, sample_size=10000)
+    np.save('src/final_project/outputs/geodesic/approx_geodesic_pairs.npy', pairs)
+    np.save('src/final_project/outputs/geodesic/approx_geodesic_dists.npy', approx_dists)
 
 if __name__ == "__main__":
     main()
