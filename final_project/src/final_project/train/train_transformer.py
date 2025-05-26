@@ -6,8 +6,8 @@ import numpy as np
 
 from final_project.utils.helpers import load_config, save_model, set_seed
 
-def train_transformer(model: Transformer, codes, seq_len, batch_size, num_embeddings, epochs, lr, weight_decay, device, save_name):
-    train_loader, _, val_loader = get_dataloaders(codes, seq_len, batch_size)
+def train_transformer(model: Transformer, code_map_flat, batch_size, num_embeddings, epochs, lr, weight_decay, device, save_name):
+    train_loader, val_loader, test_loader = get_dataloaders(code_map_flat, batch_size=batch_size)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     
     for epoch in range(epochs):
@@ -64,9 +64,10 @@ def main():
                         dropout=dropout)
     model = model.to(device)
 
-    codes = np.load("src/final_project/outputs/geodesic/kmedoids_labels.npy")  # shape: (60000,))
+    code_maps = np.load("src/final_project/output/geodesic/kmedoids_code_maps.npy") # shape: (60000, 7, 7)
+    code_map_flat = code_maps.reshape(60000, -1)  # shape: (60000, 49)
 
-    model = train_transformer(model, codes, seq_len, batch_size, num_embeddings, epochs, lr, weight_decay, device, save_name)
+    model = train_transformer(model, code_map_flat, seq_len, batch_size, num_embeddings, epochs, lr, weight_decay, device, save_name)
 
 if __name__ == "__main__":
     main()
