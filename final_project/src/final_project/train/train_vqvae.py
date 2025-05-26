@@ -5,7 +5,7 @@ from final_project.data.mnist import get_dataloaders
 from final_project.utils import save_model, load_config, set_seed
 
 def train_vqvae(model: VQVAE, epochs, lr, batch_size, device, save_name):
-    train_loader, _ = get_dataloaders(batch_size)
+    train_loader, val_loader, _ = get_dataloaders(batch_size)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
     for epoch in range(epochs):
@@ -20,13 +20,26 @@ def train_vqvae(model: VQVAE, epochs, lr, batch_size, device, save_name):
             loss = recon_loss + vq_loss
             loss.backward()
             optimizer.step()
-
             total_loss += loss.item()
 
             if batch_idx % 100 == 0:
                 print(f'Epoch {epoch} [{batch_idx * len(data)}/{len(train_loader.dataset)}] Loss: {loss.item():.6f}')
 
-        print(f'====> Epoch: {epoch} Average loss: {total_loss / len(train_loader):.4f}')
+        avg_train_loss = total_loss / len(train_loader)
+
+        # Validation phase
+        model.eval()
+        val_loss = 0
+        with torch.no_grad():
+            for data, _ in val_loader:
+                data = data.to(device)
+                recon_batch, vq_loss = model(data)
+                recon_loss = F.mse_loss(recon_batch, data)
+                loss = recon_loss + vq_loss
+                val_loss += loss.item()
+        avg_val_loss = val_loss / len(val_loader)
+
+        print(f'====> Epoch: {epoch} Train loss: {avg_train_loss:.4f} | Val loss: {avg_val_loss:.4f}')
 
     save_model(model, save_name)
     return model
@@ -41,7 +54,7 @@ def main():
     commitment_cost = vqvae_config["model"]["commitment_cost"]
 
     epochs = vqvae_config["training"]["epochs"]
-    lr = vqvae_config["training"]["learning_rate"]
+    lr = float(vqvae_config["training"]["learning_rate"])
     batch_size = vqvae_config["training"]["batch_size"]
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
