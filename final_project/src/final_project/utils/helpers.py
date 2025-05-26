@@ -4,8 +4,7 @@ import numpy as np
 import torch
 import yaml
 
-from final_project.models.vae import VAE
-from final_project.models.vqvae import VQVAE
+from final_project.models import VAE, VQVAE, Transformer
 
 def save_model(model, name):
     root = Path(__file__).resolve().parents[1]  # Go up to project root
@@ -22,6 +21,29 @@ def load_model(model_type, model_path, device):
         hidden_dim = vae_config["model"]["hidden_dim"]
         embedding_dim = vae_config["model"]["embedding_dim"]
         model = VAE(hidden_dim=hidden_dim, embedding_dim=embedding_dim)
+        model.load_state_dict(torch.load(model_path, map_location=device))
+        model.to(device)
+    elif model_type == 'vqvae':
+        print("TODO: Implement VQVAE loading")
+    elif model_type == 'transformer':
+        transformer_config = load_config("src/final_project/configs/transformer_config.yaml")
+        num_embeddings = transformer_config["model"]["num_embeddings"]
+        seq_len = transformer_config["model"]["seq_len"]
+        embedding_dim = transformer_config["model"]["embedding_dim"]
+        nheads = transformer_config["model"]["nheads"]
+        num_layers = transformer_config["model"]["num_layers"]
+        feedforward_dim = transformer_config["model"]["feedforward_dim"]
+        dropout = transformer_config["model"]["dropout"]
+
+        model = Transformer(
+            num_embeddings=num_embeddings,
+            seq_len=seq_len,
+            embedding_dim=embedding_dim,
+            nheads=nheads,
+            num_layers=num_layers,
+            feedforward_dim=feedforward_dim,
+            dropout=dropout
+        )
         model.load_state_dict(torch.load(model_path, map_location=device))
         model.to(device)
     print(f"Model loaded from {model_path}")
