@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.stats import entropy
+import tqdm
 
 def compute_cluster_stats(assignments, n_clusters):
     counts = np.bincount(assignments, minlength=n_clusters)

@@ -5,7 +5,6 @@ import numpy as np
 from sklearn_extra.cluster import KMedoids
 from scipy.sparse.csgraph import dijkstra
 from scipy.sparse import csr_matrix, save_npz
-from tqdm import tqdm
 from annoy import AnnoyIndex
 from final_project.data.mnist import get_dataloaders
 from final_project.utils.helpers import load_config, load_model, set_seed, extract_latents
