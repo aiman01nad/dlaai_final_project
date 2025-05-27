@@ -16,15 +16,29 @@ def save_model(model, name):
 def load_model(model_type, model_path, device):
     if not Path(model_path).exists():
         raise FileNotFoundError(f"Model path {model_path} does not exist.")
+    
+    if model_type not in ['vae', 'vqvae', 'transformer']:
+        raise ValueError(f"Unsupported model type: {model_type}. Choose from 'vae', 'vqvae', or 'transformer'.")
+
     if model_type == 'vae':
         vae_config = load_config("src/final_project/configs/vae_config.yaml")
         hidden_dim = vae_config["model"]["hidden_dim"]
         embedding_dim = vae_config["model"]["embedding_dim"]
         model = VAE(hidden_dim=hidden_dim, embedding_dim=embedding_dim)
-        model.load_state_dict(torch.load(model_path, map_location=device))
-        model.to(device)
+
     elif model_type == 'vqvae':
-        print("TODO: Implement VQVAE loading")
+        vqvae_config = load_config("src/final_project/configs/vqvae_config.yaml")
+        hidden_dim = vqvae_config["model"]["hidden_dim"]
+        embedding_dim = vqvae_config["model"]["embedding_dim"]
+        num_embeddings = vqvae_config["model"]["num_embeddings"]
+        commitment_cost = vqvae_config["model"]["commitment_cost"]
+        model = VQVAE(
+            hidden_dim=hidden_dim,
+            embedding_dim=embedding_dim,
+            num_embeddings=num_embeddings,
+            commitment_cost=commitment_cost
+        )
+
     elif model_type == 'transformer':
         transformer_config = load_config("src/final_project/configs/transformer_config.yaml")
         num_embeddings = transformer_config["model"]["num_embeddings"]
@@ -44,8 +58,9 @@ def load_model(model_type, model_path, device):
             feedforward_dim=feedforward_dim,
             dropout=dropout
         )
-        model.load_state_dict(torch.load(model_path, map_location=device))
-        model.to(device)
+        
+    model.load_state_dict(torch.load(model_path, map_location=device))
+    model.to(device)
     print(f"Model loaded from {model_path}")
     return model
 
@@ -66,9 +81,9 @@ def set_seed(seed=42):
 def extract_latents(model, dataloader, device):
     model = model.to(device)
     model.eval()
-    latents, labels, codes = [], [], []
 
     if isinstance(model, VAE):
+        latents, labels = [], []
         with torch.no_grad():
             for x, y in dataloader:
                 x = x.to(device)
@@ -76,41 +91,23 @@ def extract_latents(model, dataloader, device):
                 latents.append(mu.cpu())  # keep full shape
                 labels.append(y)
 
-    elif isinstance(model, VQVAE):
-        with torch.no_grad():
-            for x, y in dataloader:
-                x = x.to(device)
-                z = model.encoder(x)  # shape: [B, C, H, W]
-                _, _, indices = model(x) # shape: [B, H, W]
-                latents.append(z.cpu())
-                labels.append(y)
-                codes.append(indices.cpu())
+        latents = torch.cat(latents, dim=0)  # shape: [N, C, H, W]
+        labels = torch.cat(labels, dim=0)
 
-    latents = torch.cat(latents, dim=0)  # shape: [N, C, H, W]
-    labels = torch.cat(labels, dim=0)
-    codes = torch.cat(codes, dim=0)
-
-    if isinstance(model, VAE):
         np.save('src/final_project/outputs/vae/vae_latents.npy', latents.numpy())
         np.save('src/final_project/outputs/vae/vae_labels.npy', labels.numpy())
         print("Latents and labels saved for VAE.")
         return latents.numpy(), labels.numpy()
 
     elif isinstance(model, VQVAE):
-        np.save('src/final_project/outputs/vqvae/vqvae_latents.npy', latents.numpy())
-        np.save('src/final_project/outputs/vqvae/vqvae_labels.npy', labels.numpy())
-        np.save('src/final_project/outputs/vqvae/vqvae_codes.npy', codes.numpy())
-        print("Latents, labels, and codes saved for VQVAE.")
-        return latents.numpy(), labels.numpy(), codes.numpy()
+        codes = []
+        with torch.no_grad():
+            for x, _ in dataloader:
+                x = x.to(device)
+                _, _, indices = model(x)  # shape: [B, H, W]
+                codes.append(indices.cpu())
 
-def load_latents_and_labels(model_type):
-    if model_type == 'vae':
-        latents = np.load('src/final_project/outputs/vae_latents.npy')
-        labels = np.load('src/final_project/outputs/vae_labels.npy')
-    elif model_type == 'vqvae':
-        latents = np.load('src/final_project/outputs/vqvae_latents.npy')
-        labels = np.load('src/final_project/outputs/vqvae_labels.npy')
-    else:
-        raise ValueError("Invalid model type. Choose 'vae' or 'vqvae'.")
-    
-    return latents, labels
+        codes = torch.cat(codes, dim=0)
+        np.save('src/final_project/outputs/vqvae/vqvae_codes.npy', codes.numpy())
+        print("Codes saved for VQVAE.")
+        return codes.numpy()

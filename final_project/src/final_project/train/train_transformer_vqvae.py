@@ -1,12 +1,13 @@
 import torch
 from final_project.models.transformer import Transformer
-from final_project.data.discrete_codes import get_dataloaders
+from final_project.data.discrete_codes import get_dataloaders as discrete_get_dataloaders
+from final_project.data.mnist import get_dataloaders as mnist_get_dataloaders
 import numpy as np
 
-from final_project.utils.helpers import load_config, load_model, save_model, set_seed
+from final_project.utils.helpers import load_config, load_model, save_model, set_seed, extract_latents
 
 def train_transformer(model: Transformer, code_map_flat, batch_size, num_embeddings, epochs, lr, weight_decay, device, save_name):
-    train_loader, val_loader, test_loader = get_dataloaders(code_map_flat, batch_size=batch_size)
+    train_loader, val_loader, test_loader = discrete_get_dataloaders(code_map=code_map_flat, batch_size=batch_size)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
     
     for epoch in range(epochs):
@@ -41,8 +42,16 @@ def main():
     set_seed()
     device = "cuda" if torch.cuda.is_available() else "cpu"
     transformer_config = load_config("src/final_project/configs/transformer_config.yaml")
-    transformer = load_model('transformer', 'src/final_project/checkpoints/transformer.pth', device)
     save_name = "transformer.pth"
+
+    num_embeddings = transformer_config["model"]["num_embeddings"]
+    seq_len = transformer_config["model"]["seq_len"]
+    embedding_dim = transformer_config["model"]["embedding_dim"]
+    nheads = transformer_config["model"]["nheads"]
+    num_layers = transformer_config["model"]["num_layers"]
+    feedforward_dim = transformer_config["model"]["feedforward_dim"]
+    dropout = transformer_config["model"]["dropout"]
+
     
     num_embeddings = transformer_config["model"]["num_embeddings"]
     batch_size = transformer_config["training"]["batch_size"]
@@ -50,8 +59,20 @@ def main():
     lr = float(transformer_config["training"]["learning_rate"])
     weight_decay = float(transformer_config["training"]["weight_decay"])
 
-    code_maps = np.load("src/final_project/outputs/geodesic/kmedoids_code_maps.npy") # shape: (60000, 7, 7)
-    code_map_flat = code_maps.reshape(60000, -1)  # shape: (60000, 49)
+    transformer = Transformer(
+        num_embeddings=num_embeddings,
+        seq_len=seq_len,
+        embedding_dim=embedding_dim,
+        nheads=nheads,
+        num_layers=num_layers,
+        feedforward_dim=feedforward_dim,
+        dropout=dropout
+    ).to(device)
+
+    vqvae = load_model('vqvae', 'src/final_project/checkpoints/vqvae.pth', device)
+    train_loader, _, _ = mnist_get_dataloaders(batch_size=batch_size)
+    code_maps = extract_latents(vqvae, train_loader, device)
+    code_map_flat = code_maps.reshape(code_maps.shape[0], -1)
 
     transformer = train_transformer(transformer, code_map_flat, batch_size, num_embeddings, epochs, lr, weight_decay, device, save_name)
 

@@ -5,7 +5,7 @@ from final_project.data.mnist import get_dataloaders
 from final_project.utils import save_model, load_config, set_seed
 
 def train_vae(model: VAE, epochs, lr, weight_decay, batch_size, device, beta, save_name):
-    train_loader, val_loader = get_dataloaders(batch_size)
+    train_loader, val_loader, _ = get_dataloaders(batch_size)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
 
     for epoch in range(epochs):

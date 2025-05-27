@@ -15,7 +15,7 @@ def train_vqvae(model: VQVAE, epochs, lr, batch_size, device, save_name):
         for batch_idx, (data, _) in enumerate(train_loader):
             data = data.to(device)
             optimizer.zero_grad()
-            recon_batch, vq_loss = model(data)
+            recon_batch, vq_loss, _ = model(data)
             recon_loss = F.mse_loss(recon_batch, data)
             loss = recon_loss + vq_loss
             loss.backward()
@@ -33,7 +33,7 @@ def train_vqvae(model: VQVAE, epochs, lr, batch_size, device, save_name):
         with torch.no_grad():
             for data, _ in val_loader:
                 data = data.to(device)
-                recon_batch, vq_loss = model(data)
+                recon_batch, vq_loss, _ = model(data)
                 recon_loss = F.mse_loss(recon_batch, data)
                 loss = recon_loss + vq_loss
                 val_loss += loss.item()

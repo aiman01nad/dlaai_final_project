@@ -28,6 +28,7 @@ scalable-geodesic = "final_project.clustering.scalable_geodesic_clustering:main"
 eval-geodesic = "final_project.evaluation.eval_geodesic:main"
 eval-transformer = "final_project.evaluation.eval_transformer:main"
 train-vqvae = "final_project.train.train_vqvae:main"
+train-transformer-vqvae = "final_project.train.train_transformer_vqvae:main"
 
 [build-system]
 requires = ["hatchling"]
