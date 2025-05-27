@@ -41,12 +41,15 @@ def extract_vqvae_codes(model, dataloader, device):
     return codes, labels
 
 def flatten_latents(latents):
-    # Flatten latent vectors if they have spatial dims [N, C, H, W]
+    """
+    Converts [N, C, H, W] latents to [N * H * W, C], treating each spatial location independently.
+    """
     if latents.ndim == 4:
         N, C, H, W = latents.shape
-        # Flatten spatial dims and channels into a single vector per example
-        latents = latents.reshape(N, -1)
+        # Move channel to the last axis, then reshape
+        latents = np.transpose(latents, (0, 2, 3, 1)).reshape(-1, C)
         print(f"Flattened latents shape: {latents.shape}")
+    return latents
     
 def main():
     parser = argparse.ArgumentParser(description="Extract latents or discrete codes from VAE or VQVAE")
