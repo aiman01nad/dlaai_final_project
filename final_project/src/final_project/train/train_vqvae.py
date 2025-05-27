@@ -1,69 +1,47 @@
+import pytorch_lightning as pl
+from pytorch_lightning.loggers import TensorBoardLogger
+from pytorch_lightning.callbacks import ModelCheckpoint
 import torch
-import torch.nn.functional as F
-from final_project.models import VQVAE
+from final_project.models.vqvae_module import VQVAELightningModule
 from final_project.data.mnist import get_dataloaders
-from final_project.utils import save_model, load_config, set_seed
-
-def train_vqvae(model: VQVAE, epochs, lr, batch_size, device, save_name):
-    train_loader, val_loader, _ = get_dataloaders(batch_size)
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-
-    for epoch in range(epochs):
-        model.train()
-        total_loss = 0
-
-        for batch_idx, (data, _) in enumerate(train_loader):
-            data = data.to(device)
-            optimizer.zero_grad()
-            recon_batch, vq_loss, _ = model(data)
-            recon_loss = F.mse_loss(recon_batch, data)
-            loss = recon_loss + vq_loss
-            loss.backward()
-            optimizer.step()
-            total_loss += loss.item()
-
-            if batch_idx % 100 == 0:
-                print(f'Epoch {epoch} [{batch_idx * len(data)}/{len(train_loader.dataset)}] Loss: {loss.item():.6f}')
-
-        avg_train_loss = total_loss / len(train_loader)
-
-        # Validation phase
-        model.eval()
-        val_loss = 0
-        with torch.no_grad():
-            for data, _ in val_loader:
-                data = data.to(device)
-                recon_batch, vq_loss, _ = model(data)
-                recon_loss = F.mse_loss(recon_batch, data)
-                loss = recon_loss + vq_loss
-                val_loss += loss.item()
-        avg_val_loss = val_loss / len(val_loader)
-
-        print(f'====> Epoch: {epoch} Train loss: {avg_train_loss:.4f} | Val loss: {avg_val_loss:.4f}')
-
-    save_model(model, save_name)
-    return model
+from final_project.utils import load_config, set_seed
 
 def main():
     set_seed()
-    vqvae_config = load_config("src/final_project/configs/vqvae_config.yaml")
+    config = load_config("src/final_project/configs/vqvae_config.yaml")
 
-    hidden_dim = vqvae_config["model"]["hidden_dim"]
-    embedding_dim = vqvae_config["model"]["embedding_dim"]
-    num_embeddings = vqvae_config["model"]["num_embeddings"]
-    commitment_cost = vqvae_config["model"]["commitment_cost"]
+    model_cfg = config["model"]
+    train_cfg = config["training"]
 
-    epochs = vqvae_config["training"]["epochs"]
-    lr = float(vqvae_config["training"]["learning_rate"])
-    batch_size = vqvae_config["training"]["batch_size"]
+    module = VQVAELightningModule(
+        hidden_dim=model_cfg["hidden_dim"],
+        embedding_dim=model_cfg["embedding_dim"],
+        num_embeddings=model_cfg["num_embeddings"],
+        commitment_cost=model_cfg["commitment_cost"],
+        lr=float(train_cfg["learning_rate"]),
+    )
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    save_name = "vqvae.pth"
+    train_loader, val_loader, test_loader = get_dataloaders(train_cfg["batch_size"])
 
-    model = VQVAE(hidden_dim=hidden_dim, embedding_dim=embedding_dim, num_embeddings=num_embeddings, commitment_cost=commitment_cost)
-    model = model.to(device)
+    checkpoint_callback = ModelCheckpoint(
+        monitor="val_loss",
+        dirpath="checkpoints/vqvae",
+        filename="vqvae-{epoch:02d}-{val_loss:.4f}",
+        save_top_k=1,
+        mode="min",
+    )
 
-    model = train_vqvae(model, epochs, lr, batch_size, device, save_name)
+    logger = TensorBoardLogger("logs", name="vqvae")
+
+    trainer = pl.Trainer(
+        max_epochs=train_cfg["epochs"],
+        logger=logger,
+        callbacks=[checkpoint_callback],
+        accelerator="auto"
+    )
+
+    trainer.fit(module, train_dataloaders=train_loader, val_dataloaders=val_loader)
+    trainer.test(module, dataloaders=test_loader)
 
 if __name__ == "__main__":
     main()
