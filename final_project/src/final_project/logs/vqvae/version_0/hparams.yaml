@@ -1,0 +1,5 @@
+hidden_dim: 64
+embedding_dim: 8
+num_embeddings: 128
+commitment_cost: 0.25
+lr: 0.001
