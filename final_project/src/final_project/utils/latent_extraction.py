@@ -57,13 +57,12 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using device: {device}")
 
-    train_loader, _ = get_dataloaders(batch_size=args.batch_size)
-
     if args.model_type == "vae":
-        model = VAELightningModule.load_from_checkpoint("src/final_project/checkpoints/vae")
+        module = VAELightningModule.load_from_checkpoint("src/final_project\checkpoints/vae/vae-epoch=18-val_loss=14163.7070.ckpt")
+        model = module.model
         vae_config = load_config("src/final_project/configs/vae_config.yaml")
         batch_size = vae_config["training"]["batch_size"]
-        train_loader, _ = get_dataloaders(batch_size=batch_size)
+        train_loader, _, _ = get_dataloaders(batch_size=batch_size)
 
         latents, labels = extract_vae_latents(model, train_loader, device)
         print(f"Extracted latents shape: {latents.shape}")
@@ -73,10 +72,11 @@ def main():
         print("Saved VAE latents and labels.")
 
     elif args.model_type == "vqvae":
-        model = VQVAELightningModule.load_from_checkpoint("src/final_project/checkpoints/vqvae")
+        module = VQVAELightningModule.load_from_checkpoint("src/final_project\checkpoints/vqvae/vqvae-epoch=29-val_loss=0.0132.ckpt")
+        model = module.model
         vqvae_config = load_config("src/final_project/configs/vqvae_config.yaml")
         batch_size = vqvae_config["training"]["batch_size"]
-        train_loader, _ = get_dataloaders(batch_size=batch_size)
+        train_loader, _, _ = get_dataloaders(batch_size=batch_size)
 
         codes, labels = extract_vqvae_codes(model, train_loader, device)
         print(f"Extracted codes shape: {codes.shape}")
