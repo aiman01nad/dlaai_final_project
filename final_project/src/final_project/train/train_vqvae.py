@@ -1,7 +1,6 @@
 import pytorch_lightning as pl
 from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
-import torch
 from final_project.models.vqvae_module import VQVAELightningModule
 from final_project.data.mnist import get_dataloaders
 from final_project.utils import load_config, set_seed
@@ -25,13 +24,13 @@ def main():
 
     checkpoint_callback = ModelCheckpoint(
         monitor="val_loss",
-        dirpath="checkpoints/vqvae",
+        dirpath="src/final_project/checkpoints/vqvae",
         filename="vqvae-{epoch:02d}-{val_loss:.4f}",
         save_top_k=1,
         mode="min",
     )
 
-    logger = TensorBoardLogger("logs", name="vqvae")
+    logger = TensorBoardLogger("src/final_project/logs", name="vqvae")
 
     trainer = pl.Trainer(
         max_epochs=train_cfg["epochs"],
