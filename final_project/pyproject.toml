@@ -15,6 +15,7 @@ dependencies = [
     "scikit-learn>=1.6.1",
     "scikit-learn-extra>=0.3.0",
     "seaborn>=0.13.2",
+    "tensorboard>=2.19.0",
     "torch>=2.7.0",
     "torchvision>=0.22.0",
     "tqdm>=4.67.1",
@@ -28,7 +29,8 @@ scalable-geodesic = "final_project.clustering.scalable_geodesic_clustering:main"
 eval-geodesic = "final_project.evaluation.eval_geodesic:main"
 eval-transformer = "final_project.evaluation.eval_transformer:main"
 train-vqvae = "final_project.train.train_vqvae:main"
-train-transformer-vqvae = "final_project.train.train_transformer_vqvae:main"
+train-vae = "final_project.train.train_vae:main"
+train-transformer = "final_project.train.train_transformer:main"
 
 [build-system]
 requires = ["hatchling"]

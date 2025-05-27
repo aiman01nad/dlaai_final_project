@@ -15,8 +15,7 @@ class ImageCodeSequenceDataset(Dataset):
         return x, y
 
 def get_dataloaders(code_map, batch_size):
-    # code_map shape: (60000, 49)
-    train_codes, val_codes, test_codes = np.split(code_map, [50000, 55000]) # 50k for training, 5k for validation, 5k for testing
+    train_codes, val_codes, test_codes = np.split(code_map, [40000, 45000]) # 40k train, 5k val, 5k test
 
     train_dataset = ImageCodeSequenceDataset(train_codes)
     val_dataset = ImageCodeSequenceDataset(val_codes)
