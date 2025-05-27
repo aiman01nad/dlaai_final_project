@@ -1,10 +1,10 @@
 model:
-  hidden_dim: 128
-  embedding_dim: 64
-  num_embeddings: 512
+  hidden_dim: 64
+  embedding_dim: 8
+  num_embeddings: 128
   commitment_cost: 0.25
 
 training:
   batch_size: 128
   epochs: 30
-  learning_rate: 1e-3
+  learning_rate: 0.001

@@ -1,6 +1,6 @@
 model: 
-  num_embeddings: 10
-  seq_len: 48
+  num_embeddings: 128
+  seq_len: 48 # Matches a flattened latent grid of 7*7 with one token reserved for prediction
   embedding_dim: 128
   nheads: 4
   num_layers: 4
@@ -10,5 +10,5 @@ model:
 training:
   batch_size: 64
   epochs: 10
-  learning_rate: 1e-3
-  weight_decay: 1e-4
+  learning_rate: 0.001
+  weight_decay: 0.0001
