@@ -24,10 +24,7 @@ dependencies = [
 
 [project.scripts]
 final-project = "final_project:main"
-geodesic-kmeans = "final_project.clustering.geodesic_kmeans:main"
 scalable-geodesic = "final_project.clustering.scalable_geodesic_clustering:main"
-eval-geodesic = "final_project.evaluation.eval_geodesic:main"
-eval-transformer = "final_project.evaluation.eval_transformer:main"
 train-vqvae = "final_project.train.train_vqvae:main"
 train-vae = "final_project.train.train_vae:main"
 train-transformer = "final_project.train.train_transformer:main"

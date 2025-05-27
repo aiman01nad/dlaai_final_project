@@ -60,8 +60,9 @@ class VectorQuantizer(nn.Module):
 
         # Straight-through estimator
         quantized = z + (quantized - z).detach()
+        indices = encoding_indices.view(z.shape[0], z.shape[2], z.shape[3]) # reshape to match original spatial dimensions
 
-        return quantized, loss, encoding_indices.view(z.shape[0], z.shape[2], z.shape[3])
+        return quantized, loss, indices
 
 class VQVAE(nn.Module):
     def __init__(self, hidden_dim, embedding_dim, num_embeddings, commitment_cost):

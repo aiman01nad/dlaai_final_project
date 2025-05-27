@@ -1,13 +1,12 @@
 import time
 import tracemalloc
-import torch
 import numpy as np
 from sklearn_extra.cluster import KMedoids
 from scipy.sparse.csgraph import dijkstra
 from scipy.sparse import csr_matrix, save_npz
 from annoy import AnnoyIndex
-from final_project.data.mnist import get_dataloaders
-from final_project.utils.helpers import load_config, load_model, set_seed, extract_latents
+from final_project.utils.helpers import load_config, set_seed
+from final_project.utils.latent_extraction import flatten_latents, reshape_cluster_labels
 
 def profile_step(name, func, *args, **kwargs):
     print(f"\n▶️ Starting: {name}")
@@ -20,7 +19,7 @@ def profile_step(name, func, *args, **kwargs):
     tracemalloc.stop()
     return result
 
-def build_annoy_knn_graph(latents, k, metric='euclidean'):
+def build_annoy_knn_graph(latents, k, n_trees, metric='euclidean'):
     """ Builds a sparse k-NN graph using Annoy for approximate nearest neighbors using Euclidian distances."""
     N, d = latents.shape
     print(f"Annoy setup: {N:,} vectors of dim {d}, k={k}, metric={metric}")
@@ -33,7 +32,7 @@ def build_annoy_knn_graph(latents, k, metric='euclidean'):
         index.add_item(i, latents[i])
 
     print("Building Annoy index...")
-    index.build(50)  # 50 trees is a good default
+    index.build(n_trees)
 
     print("Querying Annoy index for nearest neighbors...")
     rows, cols, vals = [], [], []
@@ -77,51 +76,42 @@ def main():
     set_seed()
     clustering_config = load_config("src/final_project/configs/clustering_config.yaml")
 
-    batch_size = clustering_config["batch_size"]
     k = clustering_config["k_neighbors"]
+    n_trees = clustering_config["n_trees"]
     n_clusters = clustering_config["n_clusters"]
     n_landmarks = clustering_config["n_landmarks"]
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print("Using device:", device)
-
-    model = load_model('vae', "src/final_project/checkpoints/vae.pth", device)
-    train_loader, _ = get_dataloaders(batch_size=batch_size)
-
-    # Extract & save latents
-    latents, _ = profile_step("Extract Latents", extract_latents, model, train_loader, device)
-    latents = latents.astype(np.float32)
-    # Flatten 4D latents [N, C, H, W] to [N, D]
+    # Load pre-extracted latents
+    latents = np.load('src/final_project/outputs/vae/vae_latents.npy').astype(np.float32)
+    print(f"Loaded latents shape: {latents.shape}")
     N, C, H, W = latents.shape
-    # ✅ Flatten spatial dimensions, keep channels as features
-    latents = latents.transpose(0, 2, 3, 1).reshape(-1, C)  # Shape: [N * H * W, C]
-
-    # Normalize for cosine/Euclidean similarity (if needed)
-    latents /= np.linalg.norm(latents, axis=1, keepdims=True) + 1e-8
-    np.save('src/final_project/outputs/vae/vae_latents.npy', latents)
-    print(f"✅ Saved full latent vectors: shape {latents.shape}")
+    latents = flatten_latents(latents)
+    latents /= np.linalg.norm(latents, axis=1, keepdims=True) + 1e-8 # Normalize for cosine/Euclidean similarity
 
     # Build k-NN graph
-    adj = profile_step("Build KNN graph", build_annoy_knn_graph, latents, k)
+    adj = profile_step("Build KNN graph", build_annoy_knn_graph, latents, k, n_trees)
     save_npz('src/final_project/outputs/geodesic/annoy_knn_graph.npz', adj)
 
-    # Landmark medoids
+    # Select landmark medoids for scalable geodesic approximation
     medoid_indices = profile_step("Select Landmark Medoids", choose_landmark_medoids, latents, n_clusters, n_landmarks)
     np.save('src/final_project/outputs/geodesic/medoid_indices.npy', medoid_indices)
     print(f"✅ Saved medoid indices: shape {medoid_indices.shape}")
 
-    # Dijkstra distances
+    # Compute landmark distances via Dijkstra
     landmark_dists = profile_step("Compute Landmark Distances (Dijkstra)", compute_landmark_distances, adj, medoid_indices)
     np.save('src/final_project/outputs/geodesic/landmark_dists.npy', landmark_dists)
     print(f"✅ Saved landmark Dijkstra distances: shape {landmark_dists.shape}")
 
+    # Assign each latent to closest medoid (cluster label)
     labels = np.argmin(landmark_dists, axis=0)
-    print(f"Labels shape: {labels.shape}, labels reshaped: {labels.reshape(N, H, W).shape}")
-    np.save("src/final_project/outputs/geodesic/kmedoids_labels.npy", labels) # shape: (N * H * W,)
-    np.save("src/final_project/outputs/geodesic/kmedoids_code_maps.npy", labels.reshape(N, H, W))  # shape: (N, H, W)
+    np.save("src/final_project/outputs/geodesic/kmedoids_labels.npy", labels)
+    print(f"Saved cluster labels shape: {labels.shape}")
 
-    # Save codebook
-    profile_step("Build Codebook", build_codebook, latents, medoid_indices) # saves codebook_latents.npy used by decoder
+    # Save codes for transformer training
+    reshape_cluster_labels(labels, N, H, W)
+
+    # Save codebook latents (medoids)
+    profile_step("Build Codebook", build_codebook, latents, medoid_indices)
 
 if __name__ == "__main__":
     main()

@@ -1,4 +1,4 @@
-import sys
+import argparse
 import numpy as np
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
@@ -7,29 +7,31 @@ from final_project.models.transformer_module import TransformerLightningModule
 from final_project.data.discrete_codes import get_dataloaders
 from final_project.utils import load_config, set_seed
 
-
 def main():
     set_seed()
     cfg = load_config("src/final_project/configs/transformer_config.yaml")
     model_cfg = cfg["model"]
     train_cfg = cfg["training"]
 
-    dataset_type = " ".join(sys.argv[1:])
-    print(dataset_type)
+    parser = argparse.ArgumentParser(description="Train transformer on VQVAE or VAE-geodesic codes")
+    parser.add_argument("--dataset_type", type=str, choices=["vae-geodesic", "vqvae"], required=True, help="Dataset type to extract from")
+    args = parser.parse_args()
+    dataset_type = args.dataset_type
+
     # Load dataset
     if dataset_type == "vqvae":
-        code_maps = np.load("src/final_project/outputs/vqvae/vqvae_codes.npy")
+        codes = np.load("src/final_project/outputs/vqvae/vqvae_codes.npy")
     elif dataset_type == "vae-geodesic":
-        code_maps = np.load("src/final_project/outputs/geodesic/kmedoids_code_maps.npy")
+        codes = np.load("src/final_project/outputs/geodesic/geodesic_codes.npy")
     else:
         raise ValueError(f"Unknown dataset type: {dataset_type}")
 
-    code_map_flat = code_maps.reshape(code_maps.shape[0], -1)  # shape: (N, 7*7)
-    train_loader, val_loader, test_loader = get_dataloaders(code_map_flat, train_cfg["batch_size"])
+    codes = codes.reshape(codes.shape[0], -1)  # shape: (N, 7*7)
+    train_loader, val_loader, test_loader = get_dataloaders(codes, train_cfg["batch_size"])
 
     module = TransformerLightningModule(
         num_embeddings=model_cfg["num_embeddings"],
-        seq_len=code_map_flat.shape[1] - 1,
+        seq_len=codes.shape[1] - 1,
         embedding_dim=model_cfg["embedding_dim"],
         nheads=model_cfg["nheads"],
         num_layers=model_cfg["num_layers"],
