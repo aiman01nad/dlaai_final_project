@@ -6,7 +6,7 @@ from scipy.sparse.csgraph import dijkstra
 from scipy.sparse import csr_matrix, save_npz
 from annoy import AnnoyIndex
 from final_project.utils.helpers import load_config, set_seed
-from final_project.utils.latent_extraction import flatten_latents
+from final_project.utils.latent_extraction import flatten_latents, reshape_cluster_labels
 
 def profile_step(name, func, *args, **kwargs):
     print(f"\n▶️ Starting: {name}")
@@ -84,6 +84,7 @@ def main():
     # Load pre-extracted latents
     latents = np.load('src/final_project/outputs/vae/vae_latents.npy').astype(np.float32)
     print(f"Loaded latents shape: {latents.shape}")
+    N, C, H, W = latents.shape
     latents = flatten_latents(latents)
     latents /= np.linalg.norm(latents, axis=1, keepdims=True) + 1e-8 # Normalize for cosine/Euclidean similarity
 
@@ -105,6 +106,9 @@ def main():
     labels = np.argmin(landmark_dists, axis=0)
     np.save("src/final_project/outputs/geodesic/kmedoids_labels.npy", labels)
     print(f"Saved cluster labels shape: {labels.shape}")
+
+    # Save codes for transformer training
+    reshape_cluster_labels(labels, N, H, W)
 
     # Save codebook latents (medoids)
     profile_step("Build Codebook", build_codebook, latents, medoid_indices)

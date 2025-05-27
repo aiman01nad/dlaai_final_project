@@ -50,6 +50,15 @@ def flatten_latents(latents):
         latents = np.transpose(latents, (0, 2, 3, 1)).reshape(-1, C)
         print(f"Flattened latents shape: {latents.shape}")
     return latents
+
+def reshape_cluster_labels(labels, N, H, W):
+    """
+    Reshapes cluster labels back to image grid format, to be used in Transformer training.
+    """
+    codes = labels.reshape(N, H, W)
+    np.save("src/final_project/outputs/geodesic/geodesic_codes.npy", codes)
+    print(f"Cluster labels reshaped to: {codes.shape}")
+    return codes
     
 def main():
     parser = argparse.ArgumentParser(description="Extract latents or discrete codes from VAE or VQVAE")
@@ -75,7 +84,7 @@ def main():
         print("Saved VAE latents and labels.")
 
     elif args.model_type == "vqvae":
-        module = VQVAELightningModule.load_from_checkpoint("src/final_project\checkpoints/vqvae/vqvae-epoch=29-val_loss=0.0132.ckpt")
+        module = VQVAELightningModule.load_from_checkpoint("src/final_project/checkpoints/vqvae/vqvae-epoch=29-val_loss=0.0132.ckpt")
         model = module.model
         vqvae_config = load_config("src/final_project/configs/vqvae_config.yaml")
         batch_size = vqvae_config["training"]["batch_size"]
