@@ -30,7 +30,7 @@ eval-geodesic = "final_project.evaluation.eval_geodesic:main"
 eval-transformer = "final_project.evaluation.eval_transformer:main"
 train-vqvae = "final_project.train.train_vqvae:main"
 train-vae = "final_project.train.train_vae:main"
-train-transformer-vqvae = "final_project.train.train_transformer_vqvae:main"
+train-transformer = "final_project.train.train_transformer:main"
 
 [build-system]
 requires = ["hatchling"]

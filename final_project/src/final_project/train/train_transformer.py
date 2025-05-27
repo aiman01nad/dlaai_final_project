@@ -1,61 +1,63 @@
-import torch
-from final_project.models.transformer import Transformer
-from final_project.data.discrete_codes import get_dataloaders
+import sys
 import numpy as np
-
-from final_project.utils.helpers import load_config, load_model, save_model, set_seed
-
-def train_transformer(model: Transformer, code_map_flat, batch_size, num_embeddings, epochs, lr, weight_decay, device, save_name):
-    train_loader, val_loader, test_loader = get_dataloaders(code_map_flat, batch_size=batch_size)
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
-    
-    for epoch in range(epochs):
-        model.train()
-        total_loss = 0
-
-        for xb, yb in train_loader:
-            xb, yb = xb.to(device), yb.to(device)
-            logits = model(xb)
-            loss = torch.nn.functional.cross_entropy(logits.view(-1, num_embeddings), yb.view(-1))
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-            total_loss += loss.item()
-
-        # Validation phase
-        model.eval()
-        val_loss = 0
-        with torch.no_grad():
-            for x_val, y_val in val_loader:
-                x_val, y_val = x_val.to(device), y_val.to(device)
-                val_logits = model(x_val)
-                val_loss += torch.nn.functional.cross_entropy(val_logits.view(-1, num_embeddings), y_val.view(-1)).item()
-
-        print(f"Epoch {epoch}: Train Loss = {total_loss / len(train_loader):.4f}, Val Loss = {val_loss / len(val_loader):.4f}")
-
-    save_model(model, save_name)
-    return model
+import pytorch_lightning as pl
+from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.loggers import TensorBoardLogger
+from final_project.models.transformer_module import TransformerLightningModule
+from final_project.data.discrete_codes import get_dataloaders
+from final_project.utils import load_config, set_seed
 
 
 def main():
     set_seed()
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    transformer_config = load_config("src/final_project/configs/transformer_config.yaml")
-    transformer = load_model('transformer', 'src/final_project/checkpoints/transformer.pth', device)
-    save_name = "transformer.pth"
-    
-    num_embeddings = transformer_config["model"]["num_embeddings"]
-    batch_size = transformer_config["training"]["batch_size"]
-    epochs = transformer_config["training"]["epochs"]
-    lr = float(transformer_config["training"]["learning_rate"])
-    weight_decay = float(transformer_config["training"]["weight_decay"])
+    cfg = load_config("src/final_project/configs/transformer_config.yaml")
+    model_cfg = cfg["model"]
+    train_cfg = cfg["training"]
 
-    code_maps = np.load("src/final_project/outputs/geodesic/kmedoids_code_maps.npy") # shape: (60000, 7, 7)
-    code_map_flat = code_maps.reshape(60000, -1)  # shape: (60000, 49)
+    dataset_type = " ".join(sys.argv[1:])
+    print(dataset_type)
+    # Load dataset
+    if dataset_type == "vqvae":
+        code_maps = np.load("src/final_project/outputs/vqvae/vqvae_codes.npy")
+    elif dataset_type == "vae-geodesic":
+        code_maps = np.load("src/final_project/outputs/geodesic/kmedoids_code_maps.npy")
+    else:
+        raise ValueError(f"Unknown dataset type: {dataset_type}")
 
-    transformer = train_transformer(transformer, code_map_flat, batch_size, num_embeddings, epochs, lr, weight_decay, device, save_name)
+    code_map_flat = code_maps.reshape(code_maps.shape[0], -1)  # shape: (N, 7*7)
+    train_loader, val_loader, test_loader = get_dataloaders(code_map_flat, train_cfg["batch_size"])
+
+    module = TransformerLightningModule(
+        num_embeddings=model_cfg["num_embeddings"],
+        seq_len=code_map_flat.shape[1] - 1,
+        embedding_dim=model_cfg["embedding_dim"],
+        nheads=model_cfg["nheads"],
+        num_layers=model_cfg["num_layers"],
+        feedforward_dim=model_cfg["feedforward_dim"],
+        dropout=model_cfg["dropout"],
+        lr=train_cfg["learning_rate"],
+        weight_decay=train_cfg["weight_decay"]
+    )
+
+    checkpoint_callback = ModelCheckpoint(
+        monitor="val_loss",
+        dirpath=f"src/final_project/checkpoints/transformer_{dataset_type}/",
+        filename="transformer-{epoch:02d}-{val_loss:.4f}",
+        save_top_k=1,
+        mode="min",
+    )
+    logger = TensorBoardLogger("src/final_project/logs", name=f"transformer_{dataset_type}")
+
+    trainer = pl.Trainer(
+        max_epochs=train_cfg["epochs"],
+        logger=logger,
+        callbacks=[checkpoint_callback],
+        accelerator="auto"
+    )
+
+    trainer.fit(module, train_dataloaders=train_loader, val_dataloaders=val_loader)
+    trainer.test(module, dataloaders=test_loader)
+
 
 if __name__ == "__main__":
     main()
-
-
