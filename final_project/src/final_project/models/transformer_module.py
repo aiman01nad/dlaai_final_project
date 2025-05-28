@@ -35,3 +35,26 @@ class TransformerLightningModule(pl.LightningModule):
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=self.weight_decay)
+
+    def generate_sequence(self, max_len=None, temperature=1.0, start_token=None):
+        self.eval()
+        generated = []
+
+        if max_len is None:
+            max_len = self.model.seq_len
+
+        if start_token is None:
+            token = torch.randint(0, self.hparams.num_embeddings, (1, 1), device=self.device)
+        else:
+            token = torch.tensor([[start_token]], device=self.device)
+
+        generated.append(token)
+
+        for _ in range(max_len - 1):
+            input_seq = torch.cat(generated, dim=1)  # shape: (1, T)
+            logits = self(input_seq)[:, -1, :] / temperature
+            probs = torch.softmax(logits, dim=-1)
+            next_token = torch.multinomial(probs, num_samples=1)
+            generated.append(next_token)
+
+        return torch.cat(generated, dim=1)  # shape: (1, 49)
