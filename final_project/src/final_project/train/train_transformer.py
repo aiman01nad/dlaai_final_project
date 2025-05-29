@@ -31,7 +31,7 @@ def main():
 
     module = TransformerLightningModule(
         num_embeddings=model_cfg["num_embeddings"],
-        seq_len=codes.shape[1] - 1,
+        seq_len=codes.shape[1],
         embedding_dim=model_cfg["embedding_dim"],
         nheads=model_cfg["nheads"],
         num_layers=model_cfg["num_layers"],

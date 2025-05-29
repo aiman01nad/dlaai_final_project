@@ -42,12 +42,18 @@ def extract_vqvae_codes(model, dataloader, device):
 
 def flatten_latents(latents):
     """
-    Converts [N, C, H, W] latents to [N * H * W, C], treating each spatial location independently.
+    Converts [N, C, H, W] latents to [N * H * W, C], treating each spatial location independently. 
+    Converts [N, H, W] latents to [N, H*W].
     """
-    if latents.ndim == 4:
+    dimensions = latents.ndim
+    if dimensions == 4:
         N, C, H, W = latents.shape
         # Move channel to the last axis, then reshape
         latents = np.transpose(latents, (0, 2, 3, 1)).reshape(-1, C)
+        print(f"Flattened latents shape: {latents.shape}")
+    elif dimensions == 3:
+        N, H, W = latents.shape
+        latents = latents.reshape(N, H * W)
         print(f"Flattened latents shape: {latents.shape}")
     return latents
 

@@ -1,0 +1,9 @@
+num_embeddings: 128
+seq_len: 49
+embedding_dim: 128
+nheads: 4
+num_layers: 4
+feedforward_dim: 256
+dropout: 0.1
+lr: 0.001
+weight_decay: 0.0001

@@ -1,6 +1,6 @@
 model: 
   num_embeddings: 128
-  seq_len: 48 # Matches a flattened latent grid of 7*7 with one token reserved for prediction
+  seq_len: 49
   embedding_dim: 128
   nheads: 4
   num_layers: 4
