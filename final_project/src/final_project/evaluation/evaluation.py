@@ -29,19 +29,6 @@ def evaluate_reconstruction(model, dataloader, device):
     N = len(dataloader.dataset)
     return mse_total / N, torch.cat(all_x), torch.cat(all_xhat)
 
-def plot_code_histogram(code_map, title='Code usage', save_path=None):
-    flat = code_map.flatten()
-    counts = np.bincount(flat, minlength=np.max(flat)+1)
-    plt.figure(figsize=(10, 4))
-    plt.bar(np.arange(len(counts)), counts)
-    plt.title(title)
-    plt.xlabel('Code index')
-    plt.ylabel('Count')
-    plt.tight_layout()
-    if save_path:
-        plt.savefig(save_path)
-    plt.show()
-
 def save_reconstruction_grid(x, x_hat, filename):
     x_grid = make_grid(x[:8], nrow=8)
     xhat_grid = make_grid(x_hat[:8], nrow=8)
@@ -81,7 +68,7 @@ def main():
     mse, x, x_hat = evaluate_reconstruction(vae, test_loader, device)
     ssim, psnr = compute_ssim_psnr_batch(x, x_hat)
     metrics['VAE'] = {'mse': mse, 'ssim': ssim, 'psnr': psnr}
-    save_reconstruction_grid(x, x_hat, 'vae_recon.png')
+    save_reconstruction_grid(x, x_hat, 'src/final_project/outputs/vae/vae_recon.png')
 
     # Evaluate VQ-VAE
     vqvae_module = VQVAELightningModule.load_from_checkpoint("src/final_project/checkpoints/vqvae/vqvae-epoch=29-val_loss=0.0132.ckpt")
@@ -91,8 +78,7 @@ def main():
     ssim, psnr = compute_ssim_psnr_batch(x, x_hat)
     perplexity = compute_perplexity(np.load("src/final_project/outputs/vqvae/vqvae_codes.npy"), vqvae.vq.num_embeddings)
     metrics['VQ-VAE'] = {'mse': mse, 'ssim': ssim, 'psnr': psnr, 'perplexity': perplexity}
-    save_reconstruction_grid(x, x_hat, 'vqvae_recon.png')
-    plot_code_histogram(np.load("src/final_project/outputs/vqvae/vqvae_codes.npy"), 'VQ-VAE Code Usage')
+    save_reconstruction_grid(x, x_hat, 'src/final_project/outputs/vqvae/vqvae_recon.png')
 
     # Evaluate Transformer on VAE-Geodesic codes
     transformer_module = TransformerLightningModule.load_from_checkpoint("src/final_project/checkpoints/transformer_vae-geodesic/transformer-epoch=09-val_loss=2.2358.ckpt")
@@ -104,7 +90,6 @@ def main():
     #fid = compute_fid(x, x_hat, device=device)
     perplexity = compute_perplexity(code_map_flattened, 128)  # e.g. 128 medoids
     metrics['Transformer (GeoQuant)'] = {'mse': 0, 'ssim': 0, 'psnr': 0, 'perplexity': perplexity}
-    plot_code_histogram(code_map_flattened, 'Geodesic Quantization Code Usage')
 
     # Evaluate Transformer on VQVAE codes
     transformer_module = TransformerLightningModule.load_from_checkpoint("src/final_project/checkpoints/transformer_vqvae/transformer-epoch=09-val_loss=1.3112.ckpt")
@@ -116,7 +101,6 @@ def main():
     #fid = compute_fid(x, x_hat, device=device)
     perplexity = compute_perplexity(code_map_flattened, 128)  # e.g. 128 medoids
     metrics['Transformer (GeoQuant)'] = {'mse': 0, 'ssim': 0, 'psnr': 0, 'perplexity': perplexity}
-    plot_code_histogram(code_map_flattened, 'Geodesic Quantization Code Usage')
 
     print_summary_report(metrics)
 
