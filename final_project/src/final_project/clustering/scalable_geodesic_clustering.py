@@ -5,6 +5,7 @@ from sklearn_extra.cluster import KMedoids
 from scipy.sparse.csgraph import dijkstra
 from scipy.sparse import csr_matrix, save_npz
 from annoy import AnnoyIndex
+from torch import cdist
 from final_project.utils.helpers import load_config, set_seed
 from final_project.utils.latent_extraction import flatten_latents, reshape_cluster_labels
 
@@ -19,15 +20,12 @@ def profile_step(name, func, *args, **kwargs):
     tracemalloc.stop()
     return result
 
-def build_annoy_knn_graph(latents, k, n_trees, metric='euclidean'):
+def build_annoy_knn_graph(latents, k, n_trees):
     """ Builds a sparse k-NN graph using Annoy for approximate nearest neighbors using Euclidian distances."""
     N, d = latents.shape
-    print(f"Annoy setup: {N:,} vectors of dim {d}, k={k}, metric={metric}")
+    print(f"Annoy setup: {N:,} vectors of dim {d}, k={k}")
 
-    if metric not in ['euclidean', 'angular']:
-        raise ValueError("Annoy metric must be 'euclidean' or 'angular'")
-
-    index = AnnoyIndex(d, metric)
+    index = AnnoyIndex(d, 'euclidian')
     for i in range(N):
         index.add_item(i, latents[i])
 
@@ -50,13 +48,19 @@ def build_annoy_knn_graph(latents, k, n_trees, metric='euclidean'):
     return adj
 
 def choose_landmark_medoids(latents, n_clusters, n_landmarks):
-    """Selects landmark medoids using K-Medoids clustering with Euclidean distance as a scalable alternative to using geodesic distances."""
-    indices = np.random.choice(len(latents), size=n_landmarks, replace=False)
-    landmark_latents = latents[indices]
+    # Initializing cluster centers (landmarks) using farthest-point sampling
+    landmark_indices = [np.random.randint(0, len(latents))]
+    for _ in range(n_landmarks - 1):
+        dist_to_selected = np.min(cdist(latents[landmark_indices], latents), axis=0)
+        next_idx = np.argmax(dist_to_selected)
+        landmark_indices.append(next_idx)
+
+    landmark_indices = np.array(landmark_indices)
+    landmark_latents = latents[landmark_indices]
 
     kmedoids = KMedoids(n_clusters=n_clusters, metric='euclidean', init='k-medoids++', random_state=42)
     kmedoids.fit(landmark_latents)
-    medoid_indices = indices[kmedoids.medoid_indices_]
+    medoid_indices = landmark_indices[kmedoids.medoid_indices_]
     return medoid_indices
 
 def compute_landmark_distances(adj, medoid_indices):
