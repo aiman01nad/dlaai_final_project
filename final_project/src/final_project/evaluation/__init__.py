@@ -1,2 +1,2 @@
-from .visualization import visualize_codebook, visualize_latents_pca, visualize_latents_tsne, visualize_decoded_medoids, plot_latent_clusters
-from .metrics import compute_fid, compute_perplexity, compute_ssim_psnr_batch
+from .visualization import visualize_codebook, visualize_decoded_medoids
+from .metrics import compute_perplexity, compute_ssim_psnr_batch
