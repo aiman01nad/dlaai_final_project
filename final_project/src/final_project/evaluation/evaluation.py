@@ -9,7 +9,7 @@ from final_project.models.vae import VAE
 from final_project.models.vae_module import VAELightningModule
 from final_project.models.vqvae import VQVAE
 from final_project.models.transformer import Transformer
-from final_project.evaluation.metrics import compute_ssim_psnr_batch, compute_perplexity, compute_fid
+from final_project.evaluation.metrics import compute_ssim_psnr_batch, compute_perplexity
 from final_project.data.mnist import get_dataloaders
 from final_project.models.vqvae_module import VQVAELightningModule
 from final_project.utils.helpers import set_seed
@@ -87,7 +87,6 @@ def main():
     code_map = np.load('src/final_project/outputs/geodesic/geodesic_codes.npy')
     code_map_flattened = flatten_latents(code_map)
 
-    #fid = compute_fid(x, x_hat, device=device)
     perplexity = compute_perplexity(code_map_flattened, 128)  # e.g. 128 medoids
     metrics['Transformer (GeoQuant)'] = {'mse': 0, 'ssim': 0, 'psnr': 0, 'perplexity': perplexity}
 
@@ -98,9 +97,8 @@ def main():
     code_map = np.load('src/final_project/outputs/vqvae/vqvae_codes.npy')
     code_map_flattened = flatten_latents(code_map)
     
-    #fid = compute_fid(x, x_hat, device=device)
     perplexity = compute_perplexity(code_map_flattened, 128)  # e.g. 128 medoids
-    metrics['Transformer (GeoQuant)'] = {'mse': 0, 'ssim': 0, 'psnr': 0, 'perplexity': perplexity}
+    metrics['Transformer (VQ-VAE)'] = {'mse': 0, 'ssim': 0, 'psnr': 0, 'perplexity': perplexity}
 
     print_summary_report(metrics)
 
