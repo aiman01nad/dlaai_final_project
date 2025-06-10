@@ -5,9 +5,7 @@ import matplotlib.pyplot as plt
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 from torchvision.utils import make_grid
-import umap.umap_ as umap
 
-from final_project.models.vae_module import VAELightningModule
 from final_project.utils.latent_extraction import flatten_latents
 
 def save_code_histogram(codes, filename, num_embeddings=128, title="Histogram of Generated Codes"):
@@ -109,9 +107,9 @@ def main():
     vqvae_labels = np.load("src/final_project/outputs/vqvae/vqvae_labels.npy") # (N, )
 
     # Visualize latents
-    #for method in ['pca', 'tsne']:
-    #    visualize_latents(vae_latents_pooled, vae_labels, f"{output_dir}/vae_latents_{method}.png", method=method, title=f"VAE Latents ({method})")
-    #    visualize_latents(vqvae_codes_flat, vqvae_labels, f"{output_dir}/vqvae_latents_{method}.png", method=method, title=f"VQ-VAE Latents ({method})")
+    for method in ['pca', 'tsne']:
+        visualize_latents(vae_latents_pooled, vae_labels, f"{output_dir}/vae_latents_{method}.png", method=method, title=f"VAE Latents ({method})")
+        visualize_latents(vqvae_codes_flat, vqvae_labels, f"{output_dir}/vqvae_latents_{method}.png", method=method, title=f"VQ-VAE Latents ({method})")
 
     # Code usage histogram
     plot_code_histogram(vqvae_codes, f"{output_dir}/vqvae_code_usage.png")
