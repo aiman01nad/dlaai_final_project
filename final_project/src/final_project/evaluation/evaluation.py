@@ -99,11 +99,9 @@ def print_summary_report(metrics):
         f"{vals['mse']:.4f}",
         f"{vals['ssim']:.4f}",
         f"{vals['psnr']:.2f}",
-        f"{vals.get('perplexity', '—'):.2f}" if 'perplexity' in vals else '—',
-        f"{vals.get('nll', '—'):.4f}" if 'nll' in vals else '—',
-        f"{vals.get('fid', '—'):.2f}" if 'fid' in vals else '—'
+        f"{vals.get('perplexity', '—'):.2f}" if 'perplexity' in vals else '—'
     ] for name, vals in metrics.items()]
-    headers = ["Model", "MSE", "SSIM", "PSNR", "Perplexity", "NLL", "FID"]
+    headers = ["Model", "MSE", "SSIM", "PSNR", "Perplexity"]
     print("\n📊 Evaluation Summary:")
     print(tabulate(table, headers=headers, tablefmt="pretty"))
 
@@ -186,6 +184,15 @@ def main():
             'psnr': psnr,
             'perplexity': perplexity_vq
         })
+        # Save metrics for temp=1.0 to summary table
+        if temp == 1.0:
+            vqvae_transformer_metrics = {
+                'mse': mse,
+                'ssim': ssim,
+                'psnr': psnr,
+                'perplexity': perplexity_vq
+            }
+    metrics['Transformer (VQ-VAE)'] = vqvae_transformer_metrics
 
     pd.DataFrame(sweep_metrics).to_csv('src/final_project/outputs/transformer_vqvae/temperature_sweep_metrics.csv', index=False)
     print("\nTemperature Sweep Metrics:")

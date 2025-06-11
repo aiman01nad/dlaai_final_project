@@ -24,7 +24,7 @@ dependencies = [
 
 [project.scripts]
 final-project = "final_project:main"
-scalable-geodesic = "final_project.clustering.scalable_geodesic_clustering:main"
+geodesic = "final_project.clustering.scalable_geodesic_clustering:main"
 train-vqvae = "final_project.train.train_vqvae:main"
 train-vae = "final_project.train.train_vae:main"
 train-transformer = "final_project.train.train_transformer:main"
