@@ -35,7 +35,7 @@ This project investigates whether geometry-aware quantization—using geodesic d
 
 1. **Clone the repository:**
     ```bash
-    git clone https://github.com/yourusername/final_project.git
+    git clone https://github.com/aiman01nad/dlaai_final_project.git
     cd final_project
     ```
 
@@ -59,44 +59,39 @@ This project investigates whether geometry-aware quantization—using geodesic d
 
 ## How to Run
 
-### 1. **Extract Latents and Codes**
-Extract VAE or VQ-VAE latents/codes for clustering and evaluation:
-```bash
-python -m src.final_project.utils.latent_extraction --model_type vae
-python -m src.final_project.utils.latent_extraction --model_type vqvae
-```
+### 1. **Train VAE and VQ-VAE, and extract latents**
+Train the VAE and VQ-VAE models on the MNIST dataset and save the latent representations:
+
+I did this using Google Colab and the ``colab_setup_and_run.ipynb`` notebook. Just replace the path in the last cell with either ``!PYTHONPATH=src python src/final_project/train/train_vae.py`` or ``!PYTHONPATH=src python src/final_project/train/train_vqvae.py``
 
 ### 2. **Geodesic Clustering**
 Build the geodesic codebook and assign codes:
 ```bash
-python -m src.final_project.clustering.geodesic_clustering
+uv run geodesic
 ```
 
-### 3. **Train Models**
-Train VAE or VQ-VAE using provided configs:
-```bash
-python -m src.final_project.train.train_vae --config src/final_project/configs/vae_config.yaml
-python -m src.final_project.train.train_vqvae --config src/final_project/configs/vqvae_config.yaml
-```
+### 3. **Train Transformer Prior**
+Train a Transformer on the discrete code sequences: 
 
-### 4. **Train Transformer Prior**
-Train a Transformer on the discrete code sequences:
-```bash
-python -m src.final_project.train.train_transformer --config src/final_project/configs/transformer_config.yaml
-```
+Using Google Colab, replace the last cell with ``!PYTHONPATH=src python src/final_project/train/train_transformer.py --dataset_type vqvae`` or ``!PYTHONPATH=src python src/final_project/train/train_transformer.py --dataset_type vae-geodesic``
 
-### 5. **Evaluate and Visualize**
+### 4. **Evaluate and Visualize**
 Run evaluation and generate visualizations:
 ```bash
-python -m src.final_project.evaluation.evaluation
-python -m src.final_project.evaluation.visualization
+$env:PYTHONPATH="src" # If getting ModuleNotFoundError: No module named 'final_project'
+python src/final_project/evaluation/evaluation.py
+python src/final_project/evaluation/visualization.py
 ```
 
 ## Results
-
-- Quantitative metrics: MSE, SSIM, PSNR, codebook perplexity.
+- Quantitative metrics:
+  - **MSE (Mean Squared Error):** Measures the average squared difference between reconstructed and original images.
+  - **SSIM (Structural Similarity Index):** Evaluates the perceptual similarity between images, focusing on structural information.
+  - **PSNR (Peak Signal-to-Noise Ratio):** Quantifies the ratio between the maximum possible signal and the noise affecting the quality.
+  - **Codebook perplexity:** Indicates the diversity of code usage in the discrete latent space.
 - Visualizations: Latent space (t-SNE/UMAP), code usage histograms, generated samples.
 - See the `outputs/` directory for figures and logs.
+- Run ``tensorboard --logdir=src/final_project/logs/path_to_desired_log/`` to see Tensorboard logs
 
 ---
 

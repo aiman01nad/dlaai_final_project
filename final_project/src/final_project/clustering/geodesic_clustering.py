@@ -3,9 +3,8 @@ import tracemalloc
 import numpy as np
 from sklearn_extra.cluster import KMedoids
 from scipy.sparse.csgraph import dijkstra
-from scipy.sparse import csr_matrix, save_npz
+from scipy.sparse import csr_matrix, save_npz, load_npz
 from annoy import AnnoyIndex
-from torch import cdist
 from final_project.utils.helpers import load_config, set_seed
 from final_project.utils.latent_extraction import flatten_latents, reshape_cluster_labels
 
@@ -25,7 +24,7 @@ def build_annoy_knn_graph(latents, k, n_trees):
     N, d = latents.shape
     print(f"Annoy setup: {N:,} vectors of dim {d}, k={k}")
 
-    index = AnnoyIndex(d, 'euclidian')
+    index = AnnoyIndex(d, 'euclidean')
     for i in range(N):
         index.add_item(i, latents[i])
 
@@ -49,18 +48,12 @@ def build_annoy_knn_graph(latents, k, n_trees):
 
 def choose_landmark_medoids(latents, n_clusters, n_landmarks):
     # Initializing cluster centers (landmarks) using farthest-point sampling
-    landmark_indices = [np.random.randint(0, len(latents))]
-    for _ in range(n_landmarks - 1):
-        dist_to_selected = np.min(cdist(latents[landmark_indices], latents), axis=0)
-        next_idx = np.argmax(dist_to_selected)
-        landmark_indices.append(next_idx)
-
-    landmark_indices = np.array(landmark_indices)
-    landmark_latents = latents[landmark_indices]
+    indices = np.random.choice(len(latents), size=n_landmarks, replace=False)
+    landmark_latents = latents[indices]
 
     kmedoids = KMedoids(n_clusters=n_clusters, metric='euclidean', init='k-medoids++', random_state=42)
     kmedoids.fit(landmark_latents)
-    medoid_indices = landmark_indices[kmedoids.medoid_indices_]
+    medoid_indices = indices[kmedoids.medoid_indices_]
     return medoid_indices
 
 def compute_landmark_distances(adj, medoid_indices):
