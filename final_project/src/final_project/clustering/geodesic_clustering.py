@@ -3,10 +3,8 @@ import tracemalloc
 import numpy as np
 from sklearn_extra.cluster import KMedoids
 from scipy.sparse.csgraph import dijkstra
-from scipy.sparse import csr_matrix, save_npz
+from scipy.sparse import csr_matrix, save_npz, load_npz
 from annoy import AnnoyIndex
-import hnswlib
-from torch import cdist
 from final_project.utils.helpers import load_config, set_seed
 from final_project.utils.latent_extraction import flatten_latents, reshape_cluster_labels
 
@@ -26,7 +24,7 @@ def build_annoy_knn_graph(latents, k, n_trees):
     N, d = latents.shape
     print(f"Annoy setup: {N:,} vectors of dim {d}, k={k}")
 
-    index = AnnoyIndex(d, 'euclidian')
+    index = AnnoyIndex(d, 'euclidean')
     for i in range(N):
         index.add_item(i, latents[i])
 
@@ -48,44 +46,14 @@ def build_annoy_knn_graph(latents, k, n_trees):
     print("✅ Sparse k-NN graph built with Annoy.")
     return adj
 
-def build_hnsw_knn_graph(latents, k):
-    N, d = latents.shape
-    print(f"HNSWlib setup: {N:,} vectors of dim {d}, k={k}")
-
-    # Initialize index
-    p = hnswlib.Index(space='l2', dim=d)
-    p.init_index(max_elements=N, ef_construction=200, M=16)
-    p.add_items(latents, np.arange(N))
-    p.set_ef(min(50, N))  # ef should be >= k
-
-    print("Querying HNSWlib index for nearest neighbors...")
-    labels, distances = p.knn_query(latents, k=k+1)  # (N, k+1)
-
-    rows, cols, vals = [], [], []
-    for i in range(N):
-        for j, dist in zip(labels[i][1:], distances[i][1:]):  # skip self
-            rows.append(i)
-            cols.append(j)
-            vals.append(dist)
-
-    adj = csr_matrix((vals, (rows, cols)), shape=(N, N))
-    print("✅ Sparse k-NN graph built with HNSWlib.")
-    return adj
-
 def choose_landmark_medoids(latents, n_clusters, n_landmarks):
     # Initializing cluster centers (landmarks) using farthest-point sampling
-    landmark_indices = [np.random.randint(0, len(latents))]
-    for _ in range(n_landmarks - 1):
-        dist_to_selected = np.min(cdist(latents[landmark_indices], latents), axis=0)
-        next_idx = np.argmax(dist_to_selected)
-        landmark_indices.append(next_idx)
-
-    landmark_indices = np.array(landmark_indices)
-    landmark_latents = latents[landmark_indices]
+    indices = np.random.choice(len(latents), size=n_landmarks, replace=False)
+    landmark_latents = latents[indices]
 
     kmedoids = KMedoids(n_clusters=n_clusters, metric='euclidean', init='k-medoids++', random_state=42)
     kmedoids.fit(landmark_latents)
-    medoid_indices = landmark_indices[kmedoids.medoid_indices_]
+    medoid_indices = indices[kmedoids.medoid_indices_]
     return medoid_indices
 
 def compute_landmark_distances(adj, medoid_indices):
@@ -115,11 +83,11 @@ def main():
     print(f"Loaded latents shape: {latents.shape}")
     N, C, H, W = latents.shape
     latents = flatten_latents(latents)
-    latents /= np.linalg.norm(latents, axis=1, keepdims=True) + 1e-8 # Normalize for cosine/Euclidean similarity
+    latents /= np.linalg.norm(latents, axis=1, keepdims=True) + 1e-8 # Normalize
 
     # Build k-NN graph
-    adj = profile_step("Build KNN graph", build_hnsw_knn_graph, latents, k)
-    save_npz('src/final_project/outputs/geodesic/hnsw_knn_graph.npz', adj)
+    adj = profile_step("Build KNN graph", build_annoy_knn_graph, latents, k, n_trees)
+    save_npz('src/final_project/outputs/geodesic/annoy_knn_graph.npz', adj)
 
     # Select landmark medoids for scalable geodesic approximation
     medoid_indices = profile_step("Select Landmark Medoids", choose_landmark_medoids, latents, n_clusters, n_landmarks)

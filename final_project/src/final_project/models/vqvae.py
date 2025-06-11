@@ -76,3 +76,15 @@ class VQVAE(nn.Module):
         quantized, vq_loss, indices = self.vq(z)
         x_recon = self.decoder(quantized)
         return x_recon, vq_loss, indices
+
+    def decode_indices(self, indices: torch.LongTensor):
+        """
+        Decode a batch of codebook indices of shape [B, H, W] to images.
+        """
+        embeddings = self.vq.embeddings.weight  # [num_embeddings, embedding_dim]
+        quantized = F.embedding(indices, embeddings)  # [B, H, W, embedding_dim]
+        quantized = quantized.permute(0, 3, 1, 2).contiguous()  # [B, C, H, W]
+
+        return self.decoder(quantized)
+        
+

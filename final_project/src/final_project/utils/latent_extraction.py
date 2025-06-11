@@ -50,11 +50,9 @@ def flatten_latents(latents):
         N, C, H, W = latents.shape
         # Move channel to the last axis, then reshape
         latents = np.transpose(latents, (0, 2, 3, 1)).reshape(-1, C)
-        print(f"Flattened latents shape: {latents.shape}")
     elif dimensions == 3:
         N, H, W = latents.shape
         latents = latents.reshape(N, H * W)
-        print(f"Flattened latents shape: {latents.shape}")
     return latents
 
 def reshape_cluster_labels(labels, N, H, W):
